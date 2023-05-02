@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import path from 'path';
-import fs from 'fs-extra';
-import logger from '@docusaurus/logger';
+import path from "path";
+import fs from "fs-extra";
+import logger from "@docusaurus/logger";
 import {
   aliasedSitePath,
   getEditUrl,
@@ -18,14 +18,14 @@ import {
   posixPath,
   Globby,
   normalizeFrontMatterTags,
-} from '@docusaurus/utils';
+} from "@docusaurus/utils";
 
-import {getFileLastUpdate} from './lastUpdate';
-import getSlug from './slug';
-import {CURRENT_VERSION_NAME} from './constants';
-import {stripPathNumberPrefixes} from './numberPrefix';
-import {validateTutorialFrontMatter} from './frontMatter';
-import {toDocNavigationLink, toNavigationLink} from './sidebars/utils';
+import { getFileLastUpdate } from "./lastUpdate";
+import getSlug from "./slug";
+import { CURRENT_VERSION_NAME } from "./constants";
+import { stripPathNumberPrefixes } from "./numberPrefix";
+import { validateTutorialFrontMatter } from "./frontMatter";
+import { toDocNavigationLink, toNavigationLink } from "./sidebars/utils";
 import {
   MetadataOptions,
   PluginOptions,
@@ -39,22 +39,22 @@ import {
   LoadedVersion,
   FileChange,
   TutorialLevel,
-} from '@niklasp/plugin-content-tutorials';
-import type {LoadContext} from '@docusaurus/types';
-import type {SidebarsUtils} from './sidebars/utils';
-import type {DocFile} from './types';
+} from "@niklasp/plugin-content-tutorials";
+import type { LoadContext } from "@docusaurus/types";
+import type { SidebarsUtils } from "./sidebars/utils";
+import type { DocFile } from "./types";
 
 type LastUpdateOptions = Pick<
   PluginOptions,
-  'showLastUpdateAuthor' | 'showLastUpdateTime'
+  "showLastUpdateAuthor" | "showLastUpdateTime"
 >;
 
 async function readLastUpdateData(
   filePath: string,
   options: LastUpdateOptions,
-  lastUpdateFrontMatter: FileChange | undefined,
+  lastUpdateFrontMatter: FileChange | undefined
 ): Promise<LastUpdateData> {
-  const {showLastUpdateAuthor, showLastUpdateTime} = options;
+  const { showLastUpdateAuthor, showLastUpdateTime } = options;
   if (showLastUpdateAuthor || showLastUpdateTime) {
     const frontMatterTimestamp = lastUpdateFrontMatter?.date
       ? new Date(lastUpdateFrontMatter.date).getTime() / 1000
@@ -69,13 +69,13 @@ async function readLastUpdateData(
 
     // Use fake data in dev for faster development.
     const fileLastUpdateData =
-      process.env.NODE_ENV === 'production'
+      process.env.NODE_ENV === "production"
         ? await getFileLastUpdate(filePath)
         : {
-            author: 'Author',
+            author: "Author",
             timestamp: 1539502055,
           };
-    const {author, timestamp} = fileLastUpdateData ?? {};
+    const { author, timestamp } = fileLastUpdateData ?? {};
 
     return {
       lastUpdatedBy: showLastUpdateAuthor
@@ -93,38 +93,38 @@ async function readLastUpdateData(
 export async function readDocFile(
   versionMetadata: Pick<
     VersionMetadata,
-    'contentPath' | 'contentPathLocalized'
+    "contentPath" | "contentPathLocalized"
   >,
-  source: string,
+  source: string
 ): Promise<DocFile> {
   const contentPath = await getFolderContainingFile(
     getContentPathList(versionMetadata),
-    source,
+    source
   );
 
   const filePath = path.join(contentPath, source);
 
-  const content = await fs.readFile(filePath, 'utf-8');
-  return {source, content, contentPath, filePath};
+  const content = await fs.readFile(filePath, "utf-8");
+  return { source, content, contentPath, filePath };
 }
 
 export async function readVersionDocs(
   versionMetadata: VersionMetadata,
   options: Pick<
     PluginOptions,
-    'include' | 'exclude' | 'showLastUpdateAuthor' | 'showLastUpdateTime'
-  >,
+    "include" | "exclude" | "showLastUpdateAuthor" | "showLastUpdateTime"
+  >
 ): Promise<DocFile[]> {
   const sources = await Globby(options.include, {
     cwd: versionMetadata.contentPath,
     ignore: options.exclude,
   });
   return Promise.all(
-    sources.map((source) => readDocFile(versionMetadata, source)),
+    sources.map((source) => readDocFile(versionMetadata, source))
   );
 }
 
-export type DocEnv = 'production' | 'development';
+export type DocEnv = "production" | "development";
 
 /** Docs with draft front matter are only considered draft in production. */
 function isDraftForEnvironment({
@@ -134,7 +134,7 @@ function isDraftForEnvironment({
   frontMatter: TutorialFrontMatter;
   env: DocEnv;
 }): boolean {
-  return (env === 'production' && frontMatter.draft) ?? false;
+  return (env === "production" && frontMatter.draft) ?? false;
 }
 
 async function doProcessDocMetadata({
@@ -150,8 +150,8 @@ async function doProcessDocMetadata({
   options: MetadataOptions;
   env: DocEnv;
 }): Promise<DocMetadataBase> {
-  const {source, content, contentPath, filePath} = docFile;
-  const {siteDir, i18n} = context;
+  const { source, content, contentPath, filePath } = docFile;
+  const { siteDir, i18n } = context;
 
   const {
     frontMatter: unsafeFrontMatter,
@@ -173,24 +173,24 @@ async function doProcessDocMetadata({
   const lastUpdate = await readLastUpdateData(
     filePath,
     options,
-    lastUpdateFrontMatter,
+    lastUpdateFrontMatter
   );
 
   // E.g. api/plugins/myDoc -> myDoc; myDoc -> myDoc
   const sourceFileNameWithoutExtension = path.basename(
     source,
-    path.extname(source),
+    path.extname(source)
   );
 
   // E.g. api/plugins/myDoc -> api/plugins; myDoc -> .
   const sourceDirName = path.dirname(source);
 
-  const {filename: unprefixedFileName, numberPrefix} = parseNumberPrefixes
+  const { filename: unprefixedFileName, numberPrefix } = parseNumberPrefixes
     ? options.numberPrefixParser(sourceFileNameWithoutExtension)
-    : {filename: sourceFileNameWithoutExtension, numberPrefix: undefined};
+    : { filename: sourceFileNameWithoutExtension, numberPrefix: undefined };
 
   const baseID: string = frontMatter.id ?? unprefixedFileName;
-  if (baseID.includes('/')) {
+  if (baseID.includes("/")) {
     throw new Error(`Document id "${baseID}" cannot include slash.`);
   }
 
@@ -210,7 +210,7 @@ async function doProcessDocMetadata({
   // TODO legacy retrocompatibility
   // I think it's bad to affect the front matter id with the dirname?
   function computeDirNameIdPrefix() {
-    if (sourceDirName === '.') {
+    if (sourceDirName === ".") {
       return undefined;
     }
     // Eventually remove the number prefixes from intermediate directories
@@ -221,11 +221,11 @@ async function doProcessDocMetadata({
 
   const unversionedId = [computeDirNameIdPrefix(), baseID]
     .filter(Boolean)
-    .join('/');
+    .join("/");
 
   // TODO is versioning the id very useful in practice?
   // legacy versioned id, requires a breaking change to modify this
-  const id = [versionIdPrefix, unversionedId].filter(Boolean).join('/');
+  const id = [versionIdPrefix, unversionedId].filter(Boolean).join("/");
 
   const docSlug = getSlug({
     baseID,
@@ -241,9 +241,9 @@ async function doProcessDocMetadata({
   // contentTitle (because it can contain markdown/JSX syntax)
   const title: string = frontMatter.title ?? contentTitle ?? baseID;
 
-  const description: string = frontMatter.description ?? excerpt ?? '';
+  const description: string = frontMatter.description ?? excerpt ?? "";
 
-  const level: string = frontMatter.level ?? 'Beginner';
+  const level: string = frontMatter.level ?? "easy";
 
   const duration: string | undefined | null = frontMatter.duration;
 
@@ -252,17 +252,17 @@ async function doProcessDocMetadata({
   function getDocEditUrl() {
     const relativeFilePath = path.relative(contentPath, filePath);
 
-    if (typeof options.editUrl === 'function') {
+    if (typeof options.editUrl === "function") {
       return options.editUrl({
         version: versionMetadata.versionName,
         versionDocsDirPath: posixPath(
-          path.relative(siteDir, versionMetadata.contentPath),
+          path.relative(siteDir, versionMetadata.contentPath)
         ),
         docPath: posixPath(relativeFilePath),
         permalink,
         locale: context.i18n.currentLocale,
       });
-    } else if (typeof options.editUrl === 'string') {
+    } else if (typeof options.editUrl === "string") {
       const isLocalized = contentPath === versionMetadata.contentPathLocalized;
       const baseVersionEditUrl =
         isLocalized && options.editLocalizedFiles
@@ -273,15 +273,15 @@ async function doProcessDocMetadata({
     return undefined;
   }
 
-  const draft = isDraftForEnvironment({env, frontMatter});
+  const draft = isDraftForEnvironment({ env, frontMatter });
 
   const formatDate = (locale: string, date: Date, calendar: string): string => {
     try {
       return new Intl.DateTimeFormat(locale, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
         calendar,
       }).format(date);
     } catch (err) {
@@ -315,7 +315,7 @@ async function doProcessDocMetadata({
       ? formatDate(
           i18n.currentLocale,
           new Date(lastUpdate.lastUpdatedAt * 1000),
-          i18n.localeConfigs[i18n.currentLocale]!.calendar,
+          i18n.localeConfigs[i18n.currentLocale]!.calendar
         )
       : undefined,
     sidebarPosition,
@@ -335,7 +335,7 @@ export async function processDocMetadata(args: {
   } catch (err) {
     throw new Error(
       `Can't process doc metadata for doc at path path=${args.docFile.filePath} in version name=${args.versionMetadata.versionName}`,
-      {cause: err as Error},
+      { cause: err as Error }
     );
   }
 }
@@ -343,13 +343,13 @@ export async function processDocMetadata(args: {
 export function addDocNavigation(
   docsBase: DocMetadataBase[],
   sidebarsUtils: SidebarsUtils,
-  sidebarFilePath: string,
-): LoadedVersion['tutorials'] {
+  sidebarFilePath: string
+): LoadedVersion["tutorials"] {
   const docsById = createDocsByIdIndex(docsBase);
 
   sidebarsUtils.checkSidebarsDocIds(
     docsBase.flatMap(getDocIds),
-    sidebarFilePath,
+    sidebarFilePath
   );
 
   // Add sidebar/next/previous to the docs
@@ -357,12 +357,12 @@ export function addDocNavigation(
     const navigation = sidebarsUtils.getDocNavigation(
       doc.unversionedId,
       doc.id,
-      doc.frontMatter.displayed_sidebar,
+      doc.frontMatter.displayed_sidebar
     );
 
     const toNavigationLinkByDocId = (
       docId: string | null | undefined,
-      type: 'prev' | 'next',
+      type: "prev" | "next"
     ): PropNavigationLink | undefined => {
       if (!docId) {
         return undefined;
@@ -371,7 +371,7 @@ export function addDocNavigation(
       if (!navDoc) {
         // This could only happen if user provided the ID through front matter
         throw new Error(
-          `Error when loading ${doc.id} in ${doc.sourceDirName}: the pagination_${type} front matter points to a non-existent ID ${docId}.`,
+          `Error when loading ${doc.id} in ${doc.sourceDirName}: the pagination_${type} front matter points to a non-existent ID ${docId}.`
         );
       }
       return toDocNavigationLink(navDoc);
@@ -379,14 +379,14 @@ export function addDocNavigation(
 
     const previous =
       doc.frontMatter.pagination_prev !== undefined
-        ? toNavigationLinkByDocId(doc.frontMatter.pagination_prev, 'prev')
+        ? toNavigationLinkByDocId(doc.frontMatter.pagination_prev, "prev")
         : toNavigationLink(navigation.previous, docsById);
     const next =
       doc.frontMatter.pagination_next !== undefined
-        ? toNavigationLinkByDocId(doc.frontMatter.pagination_next, 'next')
+        ? toNavigationLinkByDocId(doc.frontMatter.pagination_next, "next")
         : toNavigationLink(navigation.next, docsById);
 
-    return {...doc, sidebar: navigation.sidebarName, previous, next};
+    return { ...doc, sidebar: navigation.sidebarName, previous, next };
   }
 
   const docsWithNavigation = docsBase.map(addNavData);
@@ -410,7 +410,7 @@ export function getMainDocId({
   sidebarsUtils: SidebarsUtils;
 }): string {
   function getMainDoc(): DocMetadata {
-    const versionHomeDoc = tutorials.find((doc) => doc.slug === '/');
+    const versionHomeDoc = tutorials.find((doc) => doc.slug === "/");
     const firstDocIdOfFirstSidebar =
       sidebarsUtils.getFirstDocIdOfFirstSidebar();
     if (versionHomeDoc) {
@@ -419,7 +419,7 @@ export function getMainDocId({
       return tutorials.find(
         (doc) =>
           doc.id === firstDocIdOfFirstSidebar ||
-          doc.unversionedId === firstDocIdOfFirstSidebar,
+          doc.unversionedId === firstDocIdOfFirstSidebar
       )!;
     }
     return tutorials[0]!;
@@ -443,8 +443,8 @@ export const isCategoryIndex: CategoryIndexMatcher = ({
   directories,
 }): boolean => {
   const eligibleDocIndexNames = [
-    'index',
-    'readme',
+    "index",
+    "readme",
     directories[0]?.toLowerCase(),
   ];
   return eligibleDocIndexNames.includes(fileName.toLowerCase());
@@ -459,7 +459,7 @@ export function toCategoryIndexMatcherParam({
   sourceDirName,
 }: Pick<
   DocMetadataBase,
-  'source' | 'sourceDirName'
+  "source" | "sourceDirName"
 >): Parameters<CategoryIndexMatcher>[0] {
   // source + sourceDirName are always posix-style
   return {
@@ -482,12 +482,12 @@ export function getDocIds(doc: DocMetadataBase): [string, string] {
 // versioned doc ids ("id" should be removed & "versionedId" should be renamed
 // to "id")
 export function createDocsByIdIndex<
-  Doc extends {id: string; unversionedId: string},
->(docs: Doc[]): {[docId: string]: Doc} {
+  Doc extends { id: string; unversionedId: string }
+>(docs: Doc[]): { [docId: string]: Doc } {
   return Object.fromEntries(
     docs.flatMap((doc) => [
       [doc.unversionedId, doc],
       [doc.id, doc],
-    ]),
+    ])
   );
 }

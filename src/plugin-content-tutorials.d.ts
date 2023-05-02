@@ -7,8 +7,8 @@
 
 /// <reference types="@docusaurus/module-type-aliases" />
 
-declare module '@niklasp/plugin-content-tutorials' {
-  import type {MDXOptions, LoadedMDXContent} from '@docusaurus/mdx-loader';
+declare module "@niklasp/plugin-content-tutorials" {
+  import type { MDXOptions, LoadedMDXContent } from "@docusaurus/mdx-loader";
 
   import type {
     ContentPaths,
@@ -16,18 +16,24 @@ declare module '@niklasp/plugin-content-tutorials' {
     TagsListItem,
     TagModule,
     Tag,
-  } from '@docusaurus/utils';
-  import type {Plugin, LoadContext} from '@docusaurus/types';
-  import type {Overwrite, Required} from 'utility-types';
+  } from "@docusaurus/utils";
+  import type { Plugin, LoadContext } from "@docusaurus/types";
+  import type { Overwrite, Required } from "utility-types";
 
   export type Assets = {
     image?: string;
   };
 
+  export type TutorialTag = {
+    label: string;
+    permalink: string;
+    description?: string;
+  };
+
   export enum TutorialLevel {
-    beginner = 'Beginner',
-    advanced = 'Advanced',
-    expert = 'Expert',
+    easy = "easy",
+    intermediate = "intermediate",
+    expert = "expert",
   }
 
   export type FileChange = {
@@ -130,7 +136,7 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   // TODO support custom version banner?
   // {type: "error", content: "html content"}
-  export type VersionBanner = 'unreleased' | 'unmaintained';
+  export type VersionBanner = "unreleased" | "unmaintained";
 
   export type VersionOptions = {
     /**
@@ -141,7 +147,7 @@ declare module '@niklasp/plugin-content-tutorials' {
     /** The label of the version to be used in badges, dropdowns, etc. */
     label?: string;
     /** The banner to show at the top of a doc of that version. */
-    banner?: 'none' | VersionBanner;
+    banner?: "none" | VersionBanner;
     /** Show a badge with the version label at the top of each doc. */
     badge?: boolean;
     /** Prevents search engines from indexing this version */
@@ -169,7 +175,7 @@ declare module '@niklasp/plugin-content-tutorials' {
     /** Include the current version of your docs. */
     includeCurrentVersion: boolean;
     /** Independent customization of each version's properties. */
-    versions: {[versionName: string]: VersionOptions};
+    versions: { [versionName: string]: VersionOptions };
   };
   export type SidebarOptions = {
     /**
@@ -216,7 +222,7 @@ declare module '@niklasp/plugin-content-tutorials' {
       docTagsListComponent: string;
       /** Root component of the generated category index page. */
       docCategoryGeneratedIndexComponent: string;
-      sidebarItemsGenerator: import('./sidebars/types').SidebarItemsGeneratorOption;
+      sidebarItemsGenerator: import("./sidebars/types").SidebarItemsGeneratorOption;
       /**
        * URL route for the tags section of your doc version. Will be appended to
        * `routeBasePath`. **DO NOT** include a trailing slash.
@@ -235,11 +241,11 @@ declare module '@niklasp/plugin-content-tutorials' {
          * @param filename One segment of the path, without any slashes.
          * @see https://docusaurus.io/docs/sidebar#using-number-prefixes
          */
-        numberPrefixParser: PluginOptions['numberPrefixParser'] | boolean;
+        numberPrefixParser: PluginOptions["numberPrefixParser"] | boolean;
       }
     >
   >;
-  export type SidebarsConfig = import('./sidebars/types').SidebarsConfig;
+  export type SidebarsConfig = import("./sidebars/types").SidebarsConfig;
 
   export type VersionMetadata = ContentPaths & {
     /** A name like `1.0.0`. Acquired from `versions.json`. */
@@ -351,7 +357,7 @@ declare module '@niklasp/plugin-content-tutorials' {
      * have swizzled sidebar-related code or simply querying doc data through
      * sidebars.
      */
-    sidebar_custom_props?: {[key: string]: unknown};
+    sidebar_custom_props?: { [key: string]: unknown };
     /**
      * Changes the sidebar association of the current doc. Use `null` to make
      * the current doc not associated to any sidebar.
@@ -460,7 +466,7 @@ declare module '@niklasp/plugin-content-tutorials' {
     /** Tags, normalized. */
     tags: Tag[];
     /** Front matter, as-is. */
-    frontMatter: TutorialFrontMatter & {[key: string]: unknown};
+    frontMatter: TutorialFrontMatter & { [key: string]: unknown };
     duration: string | null | undefined;
     level: string | null | undefined;
   };
@@ -473,10 +479,10 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   export type CategoryGeneratedIndexMetadata = Required<
     Omit<
-      import('./sidebars/types').SidebarItemCategoryLinkGeneratedIndex,
-      'type'
+      import("./sidebars/types").SidebarItemCategoryLinkGeneratedIndex,
+      "type"
     >,
-    'title'
+    "title"
   > & {
     navigation: PropNavigation;
     /**
@@ -504,7 +510,7 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   export type PropVersionDoc = Pick<
     DocMetadata,
-    'id' | 'title' | 'description' | 'sidebar'
+    "id" | "title" | "description" | "sidebar"
   >;
 
   export type PropVersionDocs = {
@@ -519,7 +525,7 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   export type PropVersionMetadata = Pick<
     VersionMetadata,
-    'label' | 'banner' | 'badge' | 'className' | 'isLast' | 'noIndex'
+    "label" | "banner" | "badge" | "className" | "isLast" | "noIndex"
   > & {
     /** ID of the docs plugin this version belongs to. */
     pluginId: string;
@@ -533,26 +539,26 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   export type PropCategoryGeneratedIndex = Omit<
     CategoryGeneratedIndexMetadata,
-    'sidebar'
+    "sidebar"
   >;
 
   export type PropSidebarItemLink =
-    import('./sidebars/types').PropSidebarItemLink;
+    import("./sidebars/types").PropSidebarItemLink;
   export type PropSidebarItemHtml =
-    import('./sidebars/types').PropSidebarItemHtml;
+    import("./sidebars/types").PropSidebarItemHtml;
   export type PropSidebarItemCategory =
-    import('./sidebars/types').PropSidebarItemCategory;
-  export type PropSidebarItem = import('./sidebars/types').PropSidebarItem;
+    import("./sidebars/types").PropSidebarItemCategory;
+  export type PropSidebarItem = import("./sidebars/types").PropSidebarItem;
   export type PropSidebarBreadcrumbsItem =
-    import('./sidebars/types').PropSidebarBreadcrumbsItem;
-  export type PropSidebar = import('./sidebars/types').PropSidebar;
-  export type PropSidebars = import('./sidebars/types').PropSidebars;
+    import("./sidebars/types").PropSidebarBreadcrumbsItem;
+  export type PropSidebar = import("./sidebars/types").PropSidebar;
+  export type PropSidebars = import("./sidebars/types").PropSidebars;
 
   export type PropTagDocListDoc = Pick<
     DocMetadata,
-    'id' | 'title' | 'description' | 'permalink'
+    "id" | "title" | "description" | "permalink"
   >;
-  export type PropTagDocList = TagModule & {items: PropTagDocListDoc[]};
+  export type PropTagDocList = TagModule & { items: PropTagDocListDoc[] };
 
   export type PropTagsListPage = {
     tags: TagsListItem[];
@@ -561,7 +567,7 @@ declare module '@niklasp/plugin-content-tutorials' {
   export type LoadedVersion = VersionMetadata & {
     tutorials: DocMetadata[];
     drafts: DocMetadata[];
-    sidebars: import('./sidebars/types').Sidebars;
+    sidebars: import("./sidebars/types").Sidebars;
   };
 
   export type LoadedContent = {
@@ -570,12 +576,12 @@ declare module '@niklasp/plugin-content-tutorials' {
 
   export default function pluginContentTutorials(
     context: LoadContext,
-    options: PluginOptions,
+    options: PluginOptions
   ): Promise<Plugin<LoadedContent>>;
 }
 
-declare module '@theme/DocItem' {
-  import type {PropDocContent} from '@niklasp/plugin-content-tutorials';
+declare module "@theme/DocItem" {
+  import type { PropDocContent } from "@niklasp/plugin-content-tutorials";
 
   export type DocumentRoute = {
     readonly component: () => JSX.Element;
@@ -592,27 +598,27 @@ declare module '@theme/DocItem' {
   export default function DocItem(props: Props): JSX.Element;
 }
 
-declare module '@theme/DocCategoryGeneratedIndexPage' {
-  import type {PropCategoryGeneratedIndex} from '@niklasp/plugin-content-tutorials';
+declare module "@theme/DocCategoryGeneratedIndexPage" {
+  import type { PropCategoryGeneratedIndex } from "@niklasp/plugin-content-tutorials";
 
   export interface Props {
     readonly categoryGeneratedIndex: PropCategoryGeneratedIndex;
   }
 
   export default function DocCategoryGeneratedIndexPage(
-    props: Props,
+    props: Props
   ): JSX.Element;
 }
 
-declare module '@theme/DocTagsListPage' {
-  import type {PropTagsListPage} from '@niklasp/plugin-content-tutorials';
+declare module "@theme/DocTagsListPage" {
+  import type { PropTagsListPage } from "@niklasp/plugin-content-tutorials";
 
   export interface Props extends PropTagsListPage {}
   export default function DocTagsListPage(props: Props): JSX.Element;
 }
 
-declare module '@theme/DocTagDocListPage' {
-  import type {PropTagDocList} from '@niklasp/plugin-content-tutorials';
+declare module "@theme/DocTagDocListPage" {
+  import type { PropTagDocList } from "@niklasp/plugin-content-tutorials";
 
   export interface Props {
     readonly tag: PropTagDocList;
@@ -620,16 +626,16 @@ declare module '@theme/DocTagDocListPage' {
   export default function DocTagDocListPage(props: Props): JSX.Element;
 }
 
-declare module '@theme/DocBreadcrumbs' {
+declare module "@theme/DocBreadcrumbs" {
   export default function DocBreadcrumbs(): JSX.Element;
 }
 
-declare module '@theme/DocPage' {
-  import type {PropVersionMetadata} from '@niklasp/plugin-content-tutorials';
-  import type {RouteConfigComponentProps} from 'react-router-config';
-  import type {Required} from 'utility-types';
+declare module "@theme/DocPage" {
+  import type { PropVersionMetadata } from "@niklasp/plugin-content-tutorials";
+  import type { RouteConfigComponentProps } from "react-router-config";
+  import type { Required } from "utility-types";
 
-  export interface Props extends Required<RouteConfigComponentProps, 'route'> {
+  export interface Props extends Required<RouteConfigComponentProps, "route"> {
     readonly versionMetadata: PropVersionMetadata;
   }
 

@@ -5,14 +5,18 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import _, {pick} from 'lodash';
-import {groupBy} from 'lodash';
-import {Tag, groupTaggedItems} from '@docusaurus/utils';
-import type {VersionTags} from './types';
-import type {DocMetadata} from '@niklasp/plugin-content-tutorials';
+import _, { pick } from "lodash";
+import { groupBy } from "lodash";
+import { groupTaggedItems } from "@docusaurus/utils";
+import type { VersionTags } from "./types";
+import type {
+  DocMetadata,
+  TutorialTag,
+  DocMetadataBase,
+} from "@niklasp/plugin-content-tutorials";
 
 type TaggedItemGroup<Item> = {
-  tag: Tag;
+  tag: TutorialTag;
   items: Item[];
 };
 
@@ -24,52 +28,58 @@ type TaggedItemGroup<Item> = {
  * Labels may vary on 2 MD files but they are normalized. Docs with
  * label='some label' and label='some-label' should end up in the same page.
  */
-export function groupTaggedItemsByLabel<Item>(
-  items: readonly Item[],
+export function groupTaggedItemsByLabel(
+  items: readonly DocMetadataBase[],
   /**
    * A callback telling me how to get the tags list of the current item. Usually
    * simply getting it from some metadata of the current item.
    */
-  getItemTags: (item: Item) => readonly Tag[],
-): {[permalink: string]: TaggedItemGroup<Item | Partial<Item>>} {
-  const result: {[permalink: string]: TaggedItemGroup<Item | Partial<Item>>} =
-    {};
+  getItemTags: (item: DocMetadataBase) => readonly TutorialTag[]
+): {
+  [permalink: string]: TaggedItemGroup<
+    DocMetadataBase | Partial<DocMetadataBase>
+  >;
+} {
+  const result: {
+    [permalink: string]: TaggedItemGroup<
+      DocMetadataBase | Partial<DocMetadataBase>
+    >;
+  } = {};
+
+  console.log("all items we got", items);
 
   items.forEach((item) => {
     getItemTags(item).forEach((tag) => {
+      const tagDescription = items.find(
+        (item) => item.permalink === tag.permalink
+      )?.description;
+
+      console.log(`the tagDescription of ${tag.label} is ${tagDescription}`);
+
       // Init missing tag groups
       // TODO: it's not really clear what should be the behavior if 2 tags have
       // the same permalink but the label is different for each
       // For now, the first tag found wins
       result[tag.label] ??= {
-        tag,
+        tag: {
+          ...tag,
+          description: tagDescription ?? "",
+        },
         items: [],
       };
 
       // Add item to group
-      result[tag.label]!.items.push(
-        // item,
-        {
-          ...pick(item, [
-            'title',
-            'description',
-            'permalink',
-            'tags',
-            'lastUpdatedAt',
-            'level',
-            'duration',
-          ]),
-        },
-        // pick(item, [
-        //   'frontMatter',
-        //   'frontMatter.tags',
-        //   'frontMatter.description',
-        //   'frontMatter.duration',
-        //   'frontMatter.level',
-        //   'frontMatter.updated',
-        //   'frontMatter.title',
-        // ]),
-      );
+      result[tag.label]!.items.push({
+        ...pick(item, [
+          "title",
+          "description",
+          "permalink",
+          "tags",
+          "lastUpdatedAt",
+          "level",
+          "duration",
+        ]),
+      });
     });
   });
 
@@ -94,7 +104,7 @@ export function getVersionTags(tutorials: DocMetadata[]): VersionTags {
 export function getTaggedTutorials(tutorials: DocMetadata[]): any {
   const groups = groupTaggedItemsByLabel(
     tutorials,
-    (tutorial) => tutorial.tags,
+    (tutorial) => tutorial.tags
   );
 
   return groups;

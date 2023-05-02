@@ -4,11 +4,10 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import { Tag } from '@docusaurus/utils';
-import type { VersionTags } from './types';
-import type { DocMetadata } from '@niklasp/plugin-content-tutorials';
+import type { VersionTags } from "./types";
+import type { DocMetadata, TutorialTag, DocMetadataBase } from "@niklasp/plugin-content-tutorials";
 type TaggedItemGroup<Item> = {
-    tag: Tag;
+    tag: TutorialTag;
     items: Item[];
 };
 /**
@@ -19,13 +18,13 @@ type TaggedItemGroup<Item> = {
  * Labels may vary on 2 MD files but they are normalized. Docs with
  * label='some label' and label='some-label' should end up in the same page.
  */
-export declare function groupTaggedItemsByLabel<Item>(items: readonly Item[], 
+export declare function groupTaggedItemsByLabel(items: readonly DocMetadataBase[], 
 /**
  * A callback telling me how to get the tags list of the current item. Usually
  * simply getting it from some metadata of the current item.
  */
-getItemTags: (item: Item) => readonly Tag[]): {
-    [permalink: string]: TaggedItemGroup<Item | Partial<Item>>;
+getItemTags: (item: DocMetadataBase) => readonly TutorialTag[]): {
+    [permalink: string]: TaggedItemGroup<DocMetadataBase | Partial<DocMetadataBase>>;
 };
 export declare function getVersionTags(tutorials: DocMetadata[]): VersionTags;
 export declare function getTaggedTutorials(tutorials: DocMetadata[]): any;

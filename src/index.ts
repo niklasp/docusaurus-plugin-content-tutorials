@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import path from 'path';
-import _ from 'lodash';
-import logger from '@docusaurus/logger';
+import path from "path";
+import _ from "lodash";
+import logger from "@docusaurus/logger";
 import {
   normalizeUrl,
   docuHash,
@@ -18,28 +18,28 @@ import {
   createAbsoluteFilePathMatcher,
   createSlugger,
   DEFAULT_PLUGIN_ID,
-} from '@docusaurus/utils';
-import {loadSidebars, resolveSidebarPathOption} from './sidebars';
-import {CategoryMetadataFilenamePattern} from './sidebars/generator';
+} from "@docusaurus/utils";
+import { loadSidebars, resolveSidebarPathOption } from "./sidebars";
+import { CategoryMetadataFilenamePattern } from "./sidebars/generator";
 import {
   readVersionDocs,
   processDocMetadata,
   addDocNavigation,
   type DocEnv,
-} from './docs';
-import {readVersionsMetadata} from './versions';
-import {cliDocsVersionCommand} from './cli';
-import {VERSIONS_JSON_FILE} from './constants';
-import {toGlobalDataVersion} from './globalData';
-import {toTagDocListProp} from './props';
-import {getCategoryGeneratedIndexMetadataList} from './categoryGeneratedIndex';
+} from "./docs";
+import { readVersionsMetadata } from "./versions";
+import { cliDocsVersionCommand } from "./cli";
+import { VERSIONS_JSON_FILE } from "./constants";
+import { toGlobalDataVersion } from "./globalData";
+import { toTagDocListProp } from "./props";
+import { getCategoryGeneratedIndexMetadataList } from "./categoryGeneratedIndex";
 import {
   translateLoadedContent,
   getLoadedContentTranslationFiles,
-} from './translations';
-import {getTaggedTutorials, getVersionTags} from './tags';
-import {createVersionRoutes} from './routes';
-import {createSidebarsUtils} from './sidebars/utils';
+} from "./translations";
+import { getTaggedTutorials, getVersionTags } from "./tags";
+import { createVersionRoutes } from "./routes";
+import { createSidebarsUtils } from "./sidebars/utils";
 
 import type {
   PropTagsListPage,
@@ -49,40 +49,40 @@ import type {
   TutorialFrontMatter,
   LoadedContent,
   LoadedVersion,
-} from '@niklasp/plugin-content-tutorials';
-import type {LoadContext, Plugin} from '@docusaurus/types';
+} from "@niklasp/plugin-content-tutorials";
+import type { LoadContext, Plugin } from "@docusaurus/types";
 import type {
   SourceToPermalink,
   DocFile,
   DocsMarkdownOption,
   VersionTag,
   FullVersion,
-} from './types';
-import type {RuleSetRule} from 'webpack';
+} from "./types";
+import type { RuleSetRule } from "webpack";
 
 export default async function pluginContentTutorials(
   context: LoadContext,
-  options: PluginOptions,
+  options: PluginOptions
 ): Promise<Plugin<LoadedContent>> {
-  const {siteDir, generatedFilesDir, baseUrl, siteConfig} = context;
+  const { siteDir, generatedFilesDir, baseUrl, siteConfig } = context;
 
   // Mutate options to resolve sidebar path according to siteDir
   options.sidebarPath = resolveSidebarPathOption(siteDir, options.sidebarPath);
 
-  const versionsMetadata = await readVersionsMetadata({context, options});
+  const versionsMetadata = await readVersionsMetadata({ context, options });
 
   const pluginId = options.id;
 
   const pluginDataDirRoot = path.join(
     generatedFilesDir,
-    'docusaurus-plugin-content-tutorials',
+    "docusaurus-plugin-content-tutorials"
   );
   const dataDir = path.join(pluginDataDirRoot, pluginId);
   const aliasedSource = (source: string) =>
     `~tutorials/${posixPath(path.relative(pluginDataDirRoot, source))}`;
 
   return {
-    name: 'docusaurus-plugin-content-tutorials',
+    name: "docusaurus-plugin-content-tutorials",
 
     extendCli(cli) {
       const isDefaultPluginId = pluginId === DEFAULT_PLUGIN_ID;
@@ -90,22 +90,22 @@ export default async function pluginContentTutorials(
       // Need to create one distinct command per plugin instance
       // otherwise 2 instances would try to execute the command!
       const command = isDefaultPluginId
-        ? 'tutorials:version'
+        ? "tutorials:version"
         : `tutorials:version:${pluginId}`;
       const commandDescription = isDefaultPluginId
-        ? 'Tag a new docs version'
+        ? "Tag a new docs version"
         : `Tag a new docs version (${pluginId})`;
 
       cli
         .command(command)
-        .arguments('<version>')
+        .arguments("<version>")
         .description(commandDescription)
         .action((version: unknown) =>
-          cliDocsVersionCommand(version, options, context),
+          cliDocsVersionCommand(version, options, context)
         );
     },
 
-    getTranslationFiles({content}) {
+    getTranslationFiles({ content }) {
       return getLoadedContentTranslationFiles(content);
     },
 
@@ -114,12 +114,12 @@ export default async function pluginContentTutorials(
         const result = [
           ...options.include.flatMap((pattern: any) =>
             getContentPathList(version).map(
-              (docsDirPath) => `${docsDirPath}/${pattern}`,
-            ),
+              (docsDirPath) => `${docsDirPath}/${pattern}`
+            )
           ),
           `${version.contentPath}/**/${CategoryMetadataFilenamePattern}`,
         ];
-        if (typeof version.sidebarFilePath === 'string') {
+        if (typeof version.sidebarFilePath === "string") {
           result.unshift(version.sidebarFilePath);
         }
         return result;
@@ -130,7 +130,7 @@ export default async function pluginContentTutorials(
 
     async loadContent() {
       async function loadVersionDocsBase(
-        versionMetadata: VersionMetadata,
+        versionMetadata: VersionMetadata
       ): Promise<DocMetadataBase[]> {
         const docFiles = await readVersionDocs(versionMetadata, options);
         if (docFiles.length === 0) {
@@ -139,8 +139,8 @@ export default async function pluginContentTutorials(
               versionMetadata.versionName
             }" has no docs! At least one doc should exist at "${path.relative(
               siteDir,
-              versionMetadata.contentPath,
-            )}".`,
+              versionMetadata.contentPath
+            )}".`
           );
         }
         function processVersionDoc(docFile: DocFile) {
@@ -156,15 +156,15 @@ export default async function pluginContentTutorials(
       }
 
       async function doLoadVersion(
-        versionMetadata: VersionMetadata,
+        versionMetadata: VersionMetadata
       ): Promise<LoadedVersion> {
         const docsBase: DocMetadataBase[] = await loadVersionDocsBase(
-          versionMetadata,
+          versionMetadata
         );
 
         const [drafts, tutorials] = _.partition(
           docsBase,
-          (tutorial) => tutorial.draft,
+          (tutorial) => tutorial.draft
         );
 
         const sidebars = await loadSidebars(versionMetadata.sidebarFilePath, {
@@ -187,7 +187,7 @@ export default async function pluginContentTutorials(
           tutorials: addDocNavigation(
             tutorials,
             sidebarsUtils,
-            versionMetadata.sidebarFilePath as string,
+            versionMetadata.sidebarFilePath as string
           ),
           drafts,
           sidebars,
@@ -208,19 +208,19 @@ export default async function pluginContentTutorials(
       };
     },
 
-    translateContent({content, translationFiles}) {
+    translateContent({ content, translationFiles }) {
       return translateLoadedContent(content, translationFiles);
     },
 
-    async contentLoaded({content, actions}) {
-      const {loadedVersions} = content;
+    async contentLoaded({ content, actions }) {
+      const { loadedVersions } = content;
       const {
         docLayoutComponent,
         docItemComponent,
         docCategoryGeneratedIndexComponent,
         breadcrumbs,
       } = options;
-      const {addRoute, createData, setGlobalData} = actions;
+      const { addRoute, createData, setGlobalData } = actions;
       const versions: FullVersion[] = loadedVersions.map((version: any) => {
         const sidebarsUtils = createSidebarsUtils(version.sidebars);
         return {
@@ -238,8 +238,8 @@ export default async function pluginContentTutorials(
 
         // TODO tags should be a sub route of the version route
         async function createTagsListPage() {
-          const tagsProp: PropTagsListPage['tags'] = Object.values(
-            versionTags,
+          const tagsProp: PropTagsListPage["tags"] = Object.values(
+            versionTags
           ).map((tagValue) => ({
             label: tagValue.label,
             permalink: tagValue.permalink,
@@ -250,7 +250,7 @@ export default async function pluginContentTutorials(
           if (tagsProp.length > 0) {
             const tagsPropPath = await createData(
               `${docuHash(`tags-list-${version.versionName}-prop`)}.json`,
-              JSON.stringify(tagsProp, null, 2),
+              JSON.stringify(tagsProp, null, 2)
             );
             addRoute({
               path: version.tagsPath,
@@ -272,7 +272,7 @@ export default async function pluginContentTutorials(
           });
           const tagPropPath = await createData(
             `${docuHash(`tag-${tag.permalink}`)}.json`,
-            JSON.stringify(tagProps, null, 2),
+            JSON.stringify(tagProps, null, 2)
           );
           addRoute({
             path: tag.permalink,
@@ -298,8 +298,8 @@ export default async function pluginContentTutorials(
             pluginId,
             aliasedSource,
             actions,
-          }),
-        ),
+          })
+        )
       );
 
       // TODO tags should be a sub route of the version route
@@ -320,7 +320,7 @@ export default async function pluginContentTutorials(
     },
 
     configureWebpack(_config, isServer, utils, content) {
-      const {getJSLoader} = utils;
+      const { getJSLoader } = utils;
       const {
         rehypePlugins,
         remarkPlugins,
@@ -331,7 +331,7 @@ export default async function pluginContentTutorials(
       function getSourceToPermalink(): SourceToPermalink {
         const allDocs = content.loadedVersions.flatMap((v) => v.tutorials);
         return Object.fromEntries(
-          allDocs.map(({source, permalink}) => [source, permalink]),
+          allDocs.map(({ source, permalink }) => [source, permalink])
         );
       }
 
@@ -341,7 +341,7 @@ export default async function pluginContentTutorials(
         versionsMetadata,
         onBrokenMarkdownLink: (brokenMarkdownLink) => {
           logger.report(
-            siteConfig.onBrokenMarkdownLinks,
+            siteConfig.onBrokenMarkdownLinks
           )`Docs markdown link couldn't be resolved: (url=${brokenMarkdownLink.link}) in path=${brokenMarkdownLink.filePath} for version number=${brokenMarkdownLink.contentPaths.versionName}`;
         },
       };
@@ -355,9 +355,9 @@ export default async function pluginContentTutorials(
           test: /\.mdx?$/i,
           include: contentDirs,
           use: [
-            getJSLoader({isServer}),
+            getJSLoader({ isServer }),
             {
-              loader: require.resolve('@docusaurus/mdx-loader'),
+              loader: require.resolve("@docusaurus/mdx-loader"),
               options: {
                 admonitions: options.admonitions,
                 remarkPlugins,
@@ -365,12 +365,12 @@ export default async function pluginContentTutorials(
                 beforeDefaultRehypePlugins,
                 beforeDefaultRemarkPlugins,
                 staticDirs: siteConfig.staticDirectories.map((dir) =>
-                  path.resolve(siteDir, dir),
+                  path.resolve(siteDir, dir)
                 ),
                 siteDir,
                 isMDXPartial: createAbsoluteFilePathMatcher(
                   options.exclude,
-                  contentDirs,
+                  contentDirs
                 ),
                 metadataPath: (mdxPath: string) => {
                   // Note that metadataPath must be the same/in-sync as
@@ -391,7 +391,7 @@ export default async function pluginContentTutorials(
               },
             },
             {
-              loader: path.resolve(__dirname, './markdown/index.js'),
+              loader: path.resolve(__dirname, "./markdown/index.js"),
               options: docsMarkdownOptions,
             },
           ].filter(Boolean),
@@ -407,7 +407,7 @@ export default async function pluginContentTutorials(
         ],
         resolve: {
           alias: {
-            '~tutorials': pluginDataDirRoot,
+            "~tutorials": pluginDataDirRoot,
           },
         },
         module: {
@@ -418,4 +418,4 @@ export default async function pluginContentTutorials(
   };
 }
 
-export {validateOptions} from './options';
+export { validateOptions } from "./options";
