@@ -46,15 +46,11 @@ export function groupTaggedItemsByLabel(
     >;
   } = {};
 
-  console.log("all items we got", items);
-
   items.forEach((item) => {
     getItemTags(item).forEach((tag) => {
       const tagDescription = items.find(
         (item) => item.permalink === tag.permalink
       )?.description;
-
-      console.log(`the tagDescription of ${tag.label} is ${tagDescription}`);
 
       // Init missing tag groups
       // TODO: it's not really clear what should be the behavior if 2 tags have
