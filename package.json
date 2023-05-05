@@ -1,6 +1,6 @@
 {
   "name": "@niklasp/docusaurus-plugin-content-tutorials",
-  "version": "2.4.3",
+  "version": "2.4.4",
   "description": "Tutorials plugin for Docusaurus.",
   "main": "lib/index.js",
   "sideEffects": false,
