@@ -11,6 +11,7 @@ import {
   RemarkPluginsSchema,
   RehypePluginsSchema,
   AdmonitionsSchema,
+  RouteBasePathSchema,
   URISchema,
 } from '@docusaurus/utils-validation';
 import {GlobExcludeDefault} from '@docusaurus/utils';
@@ -20,17 +21,19 @@ import {
   DisabledNumberPrefixParser,
 } from './numberPrefix';
 import type {OptionValidationContext} from '@docusaurus/types';
-import type {PluginOptions, Options} from '@niklasp/plugin-content-tutorials';
+import type {PluginOptions, Options} from '@docusaurus/plugin-content-docs';
 
 export const DEFAULT_OPTIONS: Omit<PluginOptions, 'id' | 'sidebarPath'> = {
-  path: 'tutorials', // Path to data on filesystem, relative to site dir.
-  routeBasePath: 'tutorials', // URL Route.
+  path: 'docs', // Path to data on filesystem, relative to site dir.
+  routeBasePath: 'docs', // URL Route.
   tagsBasePath: 'tags', // URL Tags Route.
   include: ['**/*.{md,mdx}'], // Extensions to include.
   exclude: GlobExcludeDefault,
   sidebarItemsGenerator: DefaultSidebarItemsGenerator,
   numberPrefixParser: DefaultNumberPrefixParser,
-  docLayoutComponent: '@theme/DocPage',
+  docsRootComponent: '@theme/DocsRoot',
+  docVersionRootComponent: '@theme/DocVersionRoot',
+  docRootComponent: '@theme/DocRoot',
   docItemComponent: '@theme/DocItem',
   docTagDocListComponent: '@theme/DocTagDocListPage',
   docTagsListComponent: '@theme/DocTagsListPage',
@@ -39,8 +42,8 @@ export const DEFAULT_OPTIONS: Omit<PluginOptions, 'id' | 'sidebarPath'> = {
   rehypePlugins: [],
   beforeDefaultRemarkPlugins: [],
   beforeDefaultRehypePlugins: [],
-  showLastUpdateTime: true,
-  showLastUpdateAuthor: true,
+  showLastUpdateTime: false,
+  showLastUpdateAuthor: false,
   admonitions: true,
   includeCurrentVersion: true,
   disableVersioning: false,
@@ -71,10 +74,7 @@ const OptionsSchema = Joi.object<PluginOptions>({
   editUrl: Joi.alternatives().try(URISchema, Joi.function()),
   editCurrentVersion: Joi.boolean().default(DEFAULT_OPTIONS.editCurrentVersion),
   editLocalizedFiles: Joi.boolean().default(DEFAULT_OPTIONS.editLocalizedFiles),
-  routeBasePath: Joi.string()
-    // '' not allowed, see https://github.com/facebook/docusaurus/issues/3374
-    // .allow('') ""
-    .default(DEFAULT_OPTIONS.routeBasePath),
+  routeBasePath: RouteBasePathSchema.default(DEFAULT_OPTIONS.routeBasePath),
   tagsBasePath: Joi.string().default(DEFAULT_OPTIONS.tagsBasePath),
   // @ts-expect-error: deprecated
   homePageId: Joi.any().forbidden().messages({
@@ -104,7 +104,11 @@ const OptionsSchema = Joi.object<PluginOptions>({
       }),
     )
     .default(() => DEFAULT_OPTIONS.numberPrefixParser),
-  docLayoutComponent: Joi.string().default(DEFAULT_OPTIONS.docLayoutComponent),
+  docsRootComponent: Joi.string().default(DEFAULT_OPTIONS.docsRootComponent),
+  docVersionRootComponent: Joi.string().default(
+    DEFAULT_OPTIONS.docVersionRootComponent,
+  ),
+  docRootComponent: Joi.string().default(DEFAULT_OPTIONS.docRootComponent),
   docItemComponent: Joi.string().default(DEFAULT_OPTIONS.docItemComponent),
   docTagsListComponent: Joi.string().default(
     DEFAULT_OPTIONS.docTagsListComponent,

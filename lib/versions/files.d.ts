@@ -4,7 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { PluginOptions, VersionMetadata } from '@niklasp/plugin-content-tutorials';
+/// <reference path="../../src/plugin-content-docs.d.ts" />
+import type { PluginOptions, VersionMetadata } from '@docusaurus/plugin-content-docs';
 import type { VersionContext } from './index';
 /** `[siteDir]/community_versioned_docs/version-1.0.0` */
 export declare function getVersionDocsDirPath(siteDir: string, pluginId: string, versionName: string): string;

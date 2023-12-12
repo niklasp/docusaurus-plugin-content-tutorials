@@ -37,7 +37,8 @@ export type GlobalDoc = {
    */
   id: string;
   path: string;
-  sidebar: string | undefined;
+  sidebar?: string;
+  unlisted?: boolean;
 };
 
 export type GlobalVersion = {
@@ -47,7 +48,7 @@ export type GlobalVersion = {
   path: string;
   /** The doc with `slug: /`, or first doc in first sidebar */
   mainDocId: string;
-  tutorials: GlobalDoc[];
+  docs: GlobalDoc[];
   /** Unversioned IDs. In development, this list is empty. */
   draftIds: string[];
   sidebars?: {[sidebarId: string]: GlobalSidebar};
@@ -79,14 +80,14 @@ const StableEmptyObject = {};
 // In blog-only mode, docs hooks are still used by the theme. We need a fail-
 // safe fallback when the docs plugin is not in use
 export const useAllDocsData = (): {[pluginId: string]: GlobalPluginData} =>
-  (useAllPluginInstancesData('docusaurus-plugin-content-tutorials') as
+  (useAllPluginInstancesData('docusaurus-plugin-content-docs') as
     | {
         [pluginId: string]: GlobalPluginData;
       }
     | undefined) ?? StableEmptyObject;
 
 export const useDocsData = (pluginId: string | undefined): GlobalPluginData =>
-  usePluginData('docusaurus-plugin-content-tutorials', pluginId, {
+  usePluginData('docusaurus-plugin-content-docs', pluginId, {
     failfast: true,
   }) as GlobalPluginData;
 

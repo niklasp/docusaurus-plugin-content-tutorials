@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import type {NumberPrefixParser} from '@niklasp/plugin-content-tutorials';
+import type {NumberPrefixParser} from '@docusaurus/plugin-content-docs';
 
 // Best-effort to avoid parsing some patterns as number prefix
 // ignore common date-like patterns: https://github.com/facebook/docusaurus/issues/4640

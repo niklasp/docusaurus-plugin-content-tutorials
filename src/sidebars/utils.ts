@@ -23,7 +23,8 @@ import type {
 import type {
   DocMetadataBase,
   PropNavigationLink,
-} from '@niklasp/plugin-content-tutorials';
+  VersionMetadata,
+} from '@docusaurus/plugin-content-docs';
 
 export function isCategoriesShorthand(
   item: SidebarItemConfig,
@@ -71,7 +72,7 @@ function collectSidebarItemsOfType<
 }
 
 export function collectSidebarDocItems(sidebar: Sidebar): SidebarItemDoc[] {
-  return collectSidebarItemsOfType('tutorial', sidebar);
+  return collectSidebarItemsOfType('doc', sidebar);
 }
 export function collectSidebarCategories(
   sidebar: Sidebar,
@@ -89,9 +90,9 @@ export function collectSidebarRefs(sidebar: Sidebar): SidebarItemDoc[] {
 export function collectSidebarDocIds(sidebar: Sidebar): string[] {
   return flattenSidebarItems(sidebar).flatMap((item) => {
     if (item.type === 'category') {
-      return item.link?.type === 'tutorial' ? [item.link.id] : [];
+      return item.link?.type === 'doc' ? [item.link.id] : [];
     }
-    if (item.type === 'tutorial') {
+    if (item.type === 'doc') {
       return [item.id];
     }
     return [];
@@ -105,7 +106,7 @@ export function collectSidebarNavigation(
     if (item.type === 'category' && item.link) {
       return [item as SidebarNavigationItem];
     }
-    if (item.type === 'tutorial') {
+    if (item.type === 'doc') {
       return [item];
     }
     return [];
@@ -135,11 +136,11 @@ export type SidebarsUtils = {
   sidebars: Sidebars;
   getFirstDocIdOfFirstSidebar: () => string | undefined;
   getSidebarNameByDocId: (docId: string) => string | undefined;
-  getDocNavigation: (
-    unversionedId: string,
-    versionedId: string,
-    displayedSidebar: string | null | undefined,
-  ) => SidebarNavigation;
+  getDocNavigation: (params: {
+    docId: string;
+    displayedSidebar: string | null | undefined;
+    unlistedIds: Set<string>;
+  }) => SidebarNavigation;
   getCategoryGeneratedIndexList: () => SidebarItemCategoryWithGeneratedIndex[];
   getCategoryGeneratedIndexNavigation: (
     categoryGeneratedIndexPermalink: string,
@@ -151,7 +152,7 @@ export type SidebarsUtils = {
    */
   getFirstLink: (sidebarId: string) =>
     | {
-        type: 'tutorial';
+        type: 'doc';
         id: string;
         label: string;
       }
@@ -162,7 +163,22 @@ export type SidebarsUtils = {
       }
     | undefined;
 
-  checkSidebarsDocIds: (validDocIds: string[], sidebarFilePath: string) => void;
+  checkLegacyVersionedSidebarNames: ({
+    versionMetadata,
+  }: {
+    sidebarFilePath: string;
+    versionMetadata: VersionMetadata;
+  }) => void;
+
+  checkSidebarsDocIds: ({
+    allDocIds,
+    sidebarFilePath,
+    versionMetadata,
+  }: {
+    allDocIds: string[];
+    sidebarFilePath: string;
+    versionMetadata: VersionMetadata;
+  }) => void;
 };
 
 export function createSidebarsUtils(sidebars: Sidebars): SidebarsUtils {
@@ -192,36 +208,50 @@ export function createSidebarsUtils(sidebars: Sidebars): SidebarsUtils {
     };
   }
 
-  function getDocNavigation(
-    unversionedId: string,
-    versionedId: string,
-    displayedSidebar: string | null | undefined,
-  ): SidebarNavigation {
-    // TODO legacy id retro-compatibility!
-    let docId = unversionedId;
-    let sidebarName =
+  function getDocNavigation({
+    docId,
+    displayedSidebar,
+    unlistedIds,
+  }: {
+    docId: string;
+    displayedSidebar: string | null | undefined;
+    unlistedIds: Set<string>;
+  }): SidebarNavigation {
+    const sidebarName =
       displayedSidebar === undefined
         ? getSidebarNameByDocId(docId)
         : displayedSidebar;
-    if (sidebarName === undefined) {
-      docId = versionedId;
-      sidebarName = getSidebarNameByDocId(docId);
-    }
 
     if (!sidebarName) {
       return emptySidebarNavigation();
     }
-    const navigationItems = sidebarNameToNavigationItems[sidebarName];
+    let navigationItems = sidebarNameToNavigationItems[sidebarName];
     if (!navigationItems) {
       throw new Error(
         `Doc with ID ${docId} wants to display sidebar ${sidebarName} but a sidebar with this name doesn't exist`,
       );
     }
+
+    // Filter unlisted items from navigation
+    navigationItems = navigationItems.filter((item) => {
+      if (item.type === 'doc' && unlistedIds.has(item.id)) {
+        return false;
+      }
+      if (
+        item.type === 'category' &&
+        item.link.type === 'doc' &&
+        unlistedIds.has(item.link.id)
+      ) {
+        return false;
+      }
+      return true;
+    });
+
     const currentItemIndex = navigationItems.findIndex((item) => {
-      if (item.type === 'tutorial') {
+      if (item.type === 'doc') {
         return item.id === docId;
       }
-      if (item.type === 'category' && item.link.type === 'tutorial') {
+      if (item.type === 'category' && item.link.type === 'doc') {
         return item.link.id === docId;
       }
       return false;
@@ -280,26 +310,122 @@ export function createSidebarsUtils(sidebars: Sidebars): SidebarsUtils {
     };
   }
 
-  function checkSidebarsDocIds(validDocIds: string[], sidebarFilePath: string) {
+  // TODO remove in Docusaurus v4
+  function getLegacyVersionedPrefix(versionMetadata: VersionMetadata): string {
+    return `version-${versionMetadata.versionName}/`;
+  }
+
+  // In early v2, sidebar names used to be versioned
+  // example: "version-2.0.0-alpha.66/my-sidebar-name"
+  // In v3 it's not the case anymore and we throw an error to explain
+  // TODO remove in Docusaurus v4
+  function checkLegacyVersionedSidebarNames({
+    versionMetadata,
+    sidebarFilePath,
+  }: {
+    versionMetadata: VersionMetadata;
+    sidebarFilePath: string;
+  }): void {
+    const illegalPrefix = getLegacyVersionedPrefix(versionMetadata);
+    const legacySidebarNames = Object.keys(sidebars).filter((sidebarName) =>
+      sidebarName.startsWith(illegalPrefix),
+    );
+    if (legacySidebarNames.length > 0) {
+      throw new Error(
+        `Invalid sidebar file at "${toMessageRelativeFilePath(
+          sidebarFilePath,
+        )}".
+These legacy versioned sidebar names are not supported anymore in Docusaurus v3:
+- ${legacySidebarNames.sort().join('\n- ')}
+
+The sidebar names you should now use are:
+- ${legacySidebarNames
+          .sort()
+          .map((legacyName) => legacyName.split('/').splice(1).join('/'))
+          .join('\n- ')}
+
+Please remove the "${illegalPrefix}" prefix from your versioned sidebar file.
+This breaking change is documented on Docusaurus v3 release notes: https://docusaurus.io/blog/releases/3.0
+`,
+      );
+    }
+  }
+
+  // throw a better error message for Docusaurus v3 breaking change
+  // TODO this can be removed in Docusaurus v4
+  function handleLegacyVersionedDocIds({
+    invalidDocIds,
+    sidebarFilePath,
+    versionMetadata,
+  }: {
+    invalidDocIds: string[];
+    sidebarFilePath: string;
+    versionMetadata: VersionMetadata;
+  }) {
+    const illegalPrefix = getLegacyVersionedPrefix(versionMetadata);
+
+    // In older v2.0 alpha/betas, versioned docs had a legacy versioned prefix
+    // Example: "version-1.4/my-doc-id"
+    //
+    const legacyVersionedDocIds = invalidDocIds.filter((docId) =>
+      docId.startsWith(illegalPrefix),
+    );
+    if (legacyVersionedDocIds.length > 0) {
+      throw new Error(
+        `Invalid sidebar file at "${toMessageRelativeFilePath(
+          sidebarFilePath,
+        )}".
+These legacy versioned document ids are not supported anymore in Docusaurus v3:
+- ${legacyVersionedDocIds.sort().join('\n- ')}
+
+The document ids you should now use are:
+- ${legacyVersionedDocIds
+          .sort()
+          .map((legacyId) => legacyId.split('/').splice(1).join('/'))
+          .join('\n- ')}
+
+Please remove the "${illegalPrefix}" prefix from your versioned sidebar file.
+This breaking change is documented on Docusaurus v3 release notes: https://docusaurus.io/blog/releases/3.0
+`,
+      );
+    }
+  }
+
+  function checkSidebarsDocIds({
+    allDocIds,
+    sidebarFilePath,
+    versionMetadata,
+  }: {
+    allDocIds: string[];
+    sidebarFilePath: string;
+    versionMetadata: VersionMetadata;
+  }) {
     const allSidebarDocIds = Object.values(sidebarNameToDocIds).flat();
-    const invalidSidebarDocIds = _.difference(allSidebarDocIds, validDocIds);
-    if (invalidSidebarDocIds.length > 0) {
+    const invalidDocIds = _.difference(allSidebarDocIds, allDocIds);
+
+    if (invalidDocIds.length > 0) {
+      handleLegacyVersionedDocIds({
+        invalidDocIds,
+        sidebarFilePath,
+        versionMetadata,
+      });
       throw new Error(
         `Invalid sidebar file at "${toMessageRelativeFilePath(
           sidebarFilePath,
         )}".
 These sidebar document ids do not exist:
-- ${invalidSidebarDocIds.sort().join('\n- ')}
+- ${invalidDocIds.sort().join('\n- ')}
 
 Available document ids are:
-- ${_.uniq(validDocIds).sort().join('\n- ')}`,
+- ${_.uniq(allDocIds).sort().join('\n- ')}
+`,
       );
     }
   }
 
   function getFirstLink(sidebar: Sidebar):
     | {
-        type: 'tutorial';
+        type: 'doc';
         id: string;
         label: string;
       }
@@ -310,16 +436,16 @@ Available document ids are:
       }
     | undefined {
     for (const item of sidebar) {
-      if (item.type === 'tutorial') {
+      if (item.type === 'doc') {
         return {
-          type: 'tutorial',
+          type: 'doc',
           id: item.id,
           label: item.label ?? item.id,
         };
       } else if (item.type === 'category') {
-        if (item.link?.type === 'tutorial') {
+        if (item.link?.type === 'doc') {
           return {
-            type: 'tutorial',
+            type: 'doc',
             id: item.link.id,
             label: item.label,
           };
@@ -346,6 +472,7 @@ Available document ids are:
     getDocNavigation,
     getCategoryGeneratedIndexList,
     getCategoryGeneratedIndexNavigation,
+    checkLegacyVersionedSidebarNames,
     checkSidebarsDocIds,
     getFirstLink: (id) => getFirstLink(sidebars[id]!),
   };
@@ -382,7 +509,7 @@ export function toNavigationLink(
   }
 
   if (navigationItem.type === 'category') {
-    return navigationItem.link.type === 'tutorial'
+    return navigationItem.link.type === 'doc'
       ? toDocNavigationLink(getDocById(navigationItem.link.id))
       : {
           title: navigationItem.label,

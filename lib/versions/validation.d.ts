@@ -4,7 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { VersionsOptions } from '@niklasp/plugin-content-tutorials';
+/// <reference path="../../src/plugin-content-docs.d.ts" />
+import type { VersionsOptions } from '@docusaurus/plugin-content-docs';
 export declare function validateVersionName(name: unknown): asserts name is string;
 export declare function validateVersionNames(names: unknown): asserts names is string[];
 /**

@@ -4,9 +4,10 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { BrokenMarkdownLink, Tag } from "@docusaurus/utils";
-import type { VersionMetadata, LoadedVersion, CategoryGeneratedIndexMetadata } from "@niklasp/plugin-content-tutorials";
-import type { SidebarsUtils } from "./sidebars/utils";
+/// <reference path="../src/plugin-content-docs.d.ts" />
+import type { BrokenMarkdownLink, Tag } from '@docusaurus/utils';
+import type { VersionMetadata, LoadedVersion, CategoryGeneratedIndexMetadata } from '@docusaurus/plugin-content-docs';
+import type { SidebarsUtils } from './sidebars/utils';
 export type DocFile = {
     contentPath: string;
     filePath: string;
@@ -18,7 +19,8 @@ export type SourceToPermalink = {
 };
 export type VersionTag = Tag & {
     /** All doc ids having this tag. */
-    tutorialIds: string[];
+    docIds: string[];
+    unlisted: boolean;
 };
 export type VersionTags = {
     [permalink: string]: VersionTag;

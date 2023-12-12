@@ -18,7 +18,7 @@ import {validateVersionNames} from './validation';
 import type {
   PluginOptions,
   VersionMetadata,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
 import type {VersionContext} from './index';
 
 /** Add a prefix like `community_version-1.0.0`. No-op for default instance. */
@@ -65,7 +65,7 @@ export function getDocsDirPathLocalized({
 }): string {
   return getPluginI18nPath({
     localizationDir,
-    pluginName: 'docusaurus-plugin-content-tutorials',
+    pluginName: 'docusaurus-plugin-content-docs',
     pluginId,
     subPaths: [
       versionName === CURRENT_VERSION_NAME

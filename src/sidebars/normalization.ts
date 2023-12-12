@@ -38,14 +38,14 @@ export function normalizeItem(
   item: SidebarItemConfig,
 ): NormalizedSidebarItem[] {
   if (typeof item === 'string') {
-    return [{type: 'tutorial', id: item}];
+    return [{type: 'doc', id: item}];
   }
   if (isCategoriesShorthand(item)) {
     // This will never throw anyways
     return normalizeSidebar(item, 'sidebar items slice');
   }
   if (
-    (item.type === 'tutorial' || item.type === 'ref') &&
+    (item.type === 'doc' || item.type === 'ref') &&
     typeof item.label === 'string'
   ) {
     return [{...item, translatable: true}];

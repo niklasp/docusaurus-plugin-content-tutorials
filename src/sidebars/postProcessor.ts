@@ -7,7 +7,6 @@
 
 import _ from 'lodash';
 import {normalizeUrl} from '@docusaurus/utils';
-import {getDocIds} from '../docs';
 import type {
   SidebarItem,
   Sidebars,
@@ -26,7 +25,7 @@ function normalizeCategoryLink(
   category: ProcessedSidebarItemCategory,
   params: SidebarPostProcessorParams,
 ): SidebarItemCategoryLink | undefined {
-  if (category.link?.type === 'tutorial' && params.draftIds.has(category.link.id)) {
+  if (category.link?.type === 'doc' && params.draftIds.has(category.link.id)) {
     return undefined;
   }
   if (category.link?.type === 'generated-index') {
@@ -78,7 +77,7 @@ function postProcessSidebarItem(
         return null;
       }
       return {
-        type: 'tutorial',
+        type: 'doc',
         label: category.label,
         id: category.link.id,
       };
@@ -90,7 +89,7 @@ function postProcessSidebarItem(
     return category;
   }
   if (
-    (item.type === 'tutorial' || item.type === 'ref') &&
+    (item.type === 'doc' || item.type === 'ref') &&
     params.draftIds.has(item.id)
   ) {
     return null;
@@ -102,7 +101,7 @@ export function postProcessSidebars(
   sidebars: ProcessedSidebars,
   params: SidebarProcessorParams,
 ): Sidebars {
-  const draftIds = new Set(params.drafts.flatMap(getDocIds));
+  const draftIds = new Set(params.drafts.map((d) => d.id));
 
   return _.mapValues(sidebars, (sidebar) =>
     sidebar

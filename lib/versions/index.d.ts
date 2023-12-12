@@ -4,8 +4,10 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { PluginOptions, VersionBanner, VersionMetadata } from '@niklasp/plugin-content-tutorials';
+/// <reference path="../../src/plugin-content-docs.d.ts" />
+import type { FullVersion } from '../types';
 import type { LoadContext } from '@docusaurus/types';
+import type { LoadedVersion, PluginOptions, VersionBanner, VersionMetadata } from '@docusaurus/plugin-content-docs';
 export type VersionContext = {
     /** The version name to get banner of. */
     versionName: string;
@@ -35,3 +37,4 @@ export declare function readVersionsMetadata({ context, options, }: {
     context: LoadContext;
     options: PluginOptions;
 }): Promise<VersionMetadata[]>;
+export declare function toFullVersion(version: LoadedVersion): FullVersion;

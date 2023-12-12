@@ -5,13 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import type { BrokenMarkdownLink, Tag } from "@docusaurus/utils";
+import type {BrokenMarkdownLink, Tag} from '@docusaurus/utils';
 import type {
   VersionMetadata,
   LoadedVersion,
   CategoryGeneratedIndexMetadata,
-} from "@niklasp/plugin-content-tutorials";
-import type { SidebarsUtils } from "./sidebars/utils";
+} from '@docusaurus/plugin-content-docs';
+import type {SidebarsUtils} from './sidebars/utils';
 
 export type DocFile = {
   contentPath: string; // /!\ may be localized
@@ -26,7 +26,8 @@ export type SourceToPermalink = {
 
 export type VersionTag = Tag & {
   /** All doc ids having this tag. */
-  tutorialIds: string[];
+  docIds: string[];
+  unlisted: boolean;
 };
 export type VersionTags = {
   [permalink: string]: VersionTag;

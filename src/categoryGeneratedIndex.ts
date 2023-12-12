@@ -10,7 +10,7 @@ import {createDocsByIdIndex} from './docs';
 import type {
   CategoryGeneratedIndexMetadata,
   DocMetadataBase,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
 import type {SidebarItemCategoryWithGeneratedIndex} from './sidebars/types';
 
 function getCategoryGeneratedIndexMetadata({
@@ -40,13 +40,13 @@ function getCategoryGeneratedIndexMetadata({
 }
 
 export function getCategoryGeneratedIndexMetadataList({
-  tutorials,
+  docs,
   sidebarsUtils,
 }: {
   sidebarsUtils: SidebarsUtils;
-  tutorials: DocMetadataBase[];
+  docs: DocMetadataBase[];
 }): CategoryGeneratedIndexMetadata[] {
-  const docsById = createDocsByIdIndex(tutorials);
+  const docsById = createDocsByIdIndex(docs);
 
   const categoryGeneratedIndexItems =
     sidebarsUtils.getCategoryGeneratedIndexList();

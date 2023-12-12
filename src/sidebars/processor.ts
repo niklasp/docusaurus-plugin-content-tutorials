@@ -13,7 +13,7 @@ import {isCategoryIndex} from '../docs';
 import type {
   DocMetadataBase,
   VersionMetadata,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
 import type {
   NormalizedSidebarItem,
   NormalizedSidebar,
@@ -33,7 +33,6 @@ function toSidebarItemsGeneratorDoc(
 ): SidebarItemsGeneratorDoc {
   return _.pick(doc, [
     'id',
-    'unversionedId',
     'title',
     'frontMatter',
     'source',
@@ -55,11 +54,11 @@ async function processSidebar(
   categoriesMetadata: {[filePath: string]: CategoryMetadataFile},
   params: SidebarProcessorParams,
 ): Promise<ProcessedSidebar> {
-  const {sidebarItemsGenerator, numberPrefixParser, tutorials, version} = params;
+  const {sidebarItemsGenerator, numberPrefixParser, docs, version} = params;
 
   // Just a minor lazy transformation optimization
   const getSidebarItemsGeneratorDocsAndVersion = _.memoize(() => ({
-    tutorials: tutorials.map(toSidebarItemsGeneratorDoc),
+    docs: docs.map(toSidebarItemsGeneratorDoc),
     version: toSidebarItemsGeneratorVersion(version),
   }));
 

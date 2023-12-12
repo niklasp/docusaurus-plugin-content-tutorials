@@ -7,7 +7,7 @@
 
 import _ from 'lodash';
 import {createDocsByIdIndex} from './docs';
-import type {VersionTag} from './types';
+import type {VersionTag, VersionTags} from './types';
 import type {
   SidebarItemDoc,
   SidebarItem,
@@ -21,14 +21,46 @@ import type {
   PropSidebarItemCategory,
   PropTagDocList,
   PropTagDocListDoc,
+  PropTagsListPage,
   PropSidebarItemLink,
   PropVersionDocs,
   DocMetadata,
   LoadedVersion,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
+
+export function toSidebarDocItemLinkProp({
+  item,
+  doc,
+}: {
+  item: SidebarItemDoc;
+  doc: Pick<
+    DocMetadata,
+    'id' | 'title' | 'permalink' | 'unlisted' | 'frontMatter'
+  >;
+}): PropSidebarItemLink {
+  const {
+    id,
+    title,
+    permalink,
+    frontMatter: {
+      sidebar_label: sidebarLabel,
+      sidebar_custom_props: customProps,
+    },
+    unlisted,
+  } = doc;
+  return {
+    type: 'link',
+    label: sidebarLabel ?? item.label ?? title,
+    href: permalink,
+    className: item.className,
+    customProps: item.customProps ?? customProps,
+    docId: id,
+    unlisted,
+  };
+}
 
 export function toSidebarsProp(loadedVersion: LoadedVersion): PropSidebars {
-  const docsById = createDocsByIdIndex(loadedVersion.tutorials);
+  const docsById = createDocsByIdIndex(loadedVersion.docs);
 
   function getDocById(docId: string): DocMetadata {
     const docMetadata = docsById[docId];
@@ -43,28 +75,15 @@ Available document ids are:
   }
 
   const convertDocLink = (item: SidebarItemDoc): PropSidebarItemLink => {
-    const docMetadata = getDocById(item.id);
-    const {
-      title,
-      permalink,
-      frontMatter: {sidebar_label: sidebarLabel},
-    } = docMetadata;
-    return {
-      type: 'link',
-      label: sidebarLabel ?? item.label ?? title,
-      href: permalink,
-      className: item.className,
-      customProps:
-        item.customProps ?? docMetadata.frontMatter.sidebar_custom_props,
-      tutorialId: docMetadata.unversionedId,
-    };
+    const doc = getDocById(item.id);
+    return toSidebarDocItemLinkProp({item, doc});
   };
 
   function getCategoryLinkHref(
     link: SidebarItemCategoryLink | undefined,
   ): string | undefined {
     switch (link?.type) {
-      case 'tutorial':
+      case 'doc':
         return getDocById(link.id).permalink;
       case 'generated-index':
         return link.permalink;
@@ -73,11 +92,20 @@ Available document ids are:
     }
   }
 
+  function getCategoryLinkUnlisted(
+    link: SidebarItemCategoryLink | undefined,
+  ): boolean {
+    if (link?.type === 'doc') {
+      return getDocById(link.id).unlisted;
+    }
+    return false;
+  }
+
   function getCategoryLinkCustomProps(
     link: SidebarItemCategoryLink | undefined,
   ) {
     switch (link?.type) {
-      case 'tutorial':
+      case 'doc':
         return getDocById(link.id).frontMatter.sidebar_custom_props;
       default:
         return undefined;
@@ -87,12 +115,14 @@ Available document ids are:
   function convertCategory(item: SidebarItemCategory): PropSidebarItemCategory {
     const {link, ...rest} = item;
     const href = getCategoryLinkHref(link);
+    const linkUnlisted = getCategoryLinkUnlisted(link);
     const customProps = item.customProps ?? getCategoryLinkCustomProps(link);
 
     return {
       ...rest,
       items: item.items.map(normalizeItem),
       ...(href && {href}),
+      ...(linkUnlisted && {linkUnlisted}),
       ...(customProps && {customProps}),
     };
   }
@@ -102,7 +132,7 @@ Available document ids are:
       case 'category':
         return convertCategory(item);
       case 'ref':
-      case 'tutorial':
+      case 'doc':
         return convertDocLink(item);
       case 'link':
       default:
@@ -120,13 +150,13 @@ Available document ids are:
 
 function toVersionDocsProp(loadedVersion: LoadedVersion): PropVersionDocs {
   return Object.fromEntries(
-    loadedVersion.tutorials.map((tutorial) => [
-      tutorial.unversionedId,
+    loadedVersion.docs.map((doc) => [
+      doc.id,
       {
-        id: tutorial.unversionedId,
-        title: tutorial.title,
-        description: tutorial.description,
-        sidebar: tutorial.sidebar,
+        id: doc.id,
+        title: doc.title,
+        description: doc.description,
+        sidebar: doc.sidebar,
       },
     ]),
   );
@@ -146,22 +176,22 @@ export function toVersionMetadataProp(
     className: loadedVersion.className,
     isLast: loadedVersion.isLast,
     docsSidebars: toSidebarsProp(loadedVersion),
-    tutorials: toVersionDocsProp(loadedVersion),
+    docs: toVersionDocsProp(loadedVersion),
   };
 }
 
 export function toTagDocListProp({
   allTagsPath,
   tag,
-  tutorials,
+  docs,
 }: {
   allTagsPath: string;
   tag: VersionTag;
-  tutorials: DocMetadata[];
+  docs: DocMetadata[];
 }): PropTagDocList {
   function toDocListProp(): PropTagDocListDoc[] {
     const list = _.compact(
-      tag.tutorialIds.map((id) => tutorials.find((doc:any) => doc.id === id)),
+      tag.docIds.map((id) => docs.find((doc) => doc.id === id)),
     );
     // Sort docs by title
     list.sort((doc1, doc2) => doc1.title.localeCompare(doc2.title));
@@ -177,7 +207,20 @@ export function toTagDocListProp({
     label: tag.label,
     permalink: tag.permalink,
     allTagsPath,
-    count: tag.tutorialIds.length,
+    count: tag.docIds.length,
     items: toDocListProp(),
+    unlisted: tag.unlisted,
   };
+}
+
+export function toTagsListTagsProp(
+  versionTags: VersionTags,
+): PropTagsListPage['tags'] {
+  return Object.values(versionTags)
+    .filter((tagValue) => !tagValue.unlisted)
+    .map((tagValue) => ({
+      label: tagValue.label,
+      permalink: tagValue.permalink,
+      count: tagValue.docIds.length,
+    }));
 }

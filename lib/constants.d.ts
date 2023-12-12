@@ -7,7 +7,7 @@
 /** The name of the version that's actively worked on (e.g. `website/docs`) */
 export declare const CURRENT_VERSION_NAME = "current";
 /** All doc versions are stored here by version names */
-export declare const VERSIONED_DOCS_DIR = "versioned_tutorials";
+export declare const VERSIONED_DOCS_DIR = "versioned_docs";
 /** All doc versioned sidebars are stored here by version names */
 export declare const VERSIONED_SIDEBARS_DIR = "versioned_sidebars";
 /** The version names. Should 1-1 map to the content of versioned docs dir. */

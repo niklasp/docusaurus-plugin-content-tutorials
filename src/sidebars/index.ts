@@ -9,15 +9,14 @@ import fs from 'fs-extra';
 import path from 'path';
 import _ from 'lodash';
 import logger from '@docusaurus/logger';
-import {Globby} from '@docusaurus/utils';
+import {loadFreshModule, Globby} from '@docusaurus/utils';
 import Yaml from 'js-yaml';
 import combinePromises from 'combine-promises';
-import importFresh from 'import-fresh';
 import {validateSidebars, validateCategoryMetadataFile} from './validation';
 import {normalizeSidebars} from './normalization';
 import {processSidebars} from './processor';
 import {postProcessSidebars} from './postProcessor';
-import type {PluginOptions} from '@niklasp/plugin-content-tutorials';
+import type {PluginOptions} from '@docusaurus/plugin-content-docs';
 import type {SidebarsConfig, Sidebars, SidebarProcessorParams} from './types';
 
 export const DefaultSidebars: SidebarsConfig = {
@@ -68,7 +67,7 @@ async function readCategoriesMetadata(contentPath: string) {
   );
 }
 
-export async function loadSidebarsFileUnsafe(
+async function loadSidebarsFileUnsafe(
   sidebarFilePath: string | false | undefined,
 ): Promise<SidebarsConfig> {
   // false => no sidebars
@@ -89,7 +88,19 @@ export async function loadSidebarsFileUnsafe(
   }
 
   // We don't want sidebars to be cached because of hot reloading.
-  return importFresh(sidebarFilePath);
+  const module = await loadFreshModule(sidebarFilePath);
+
+  // TODO unsafe, need to refactor and improve validation
+  return module as SidebarsConfig;
+}
+
+export async function loadSidebarsFile(
+  sidebarFilePath: string | false | undefined,
+): Promise<SidebarsConfig> {
+  const sidebars = await loadSidebarsFileUnsafe(sidebarFilePath);
+
+  // TODO unsafe, need to refactor and improve validation
+  return sidebars as SidebarsConfig;
 }
 
 export async function loadSidebars(
