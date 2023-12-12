@@ -5,15 +5,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import _ from 'lodash';
-import {createDocsByIdIndex} from './docs';
-import type {VersionTag} from './types';
+import _ from "lodash";
+import { createDocsByIdIndex } from "./docs";
+import type { VersionTag } from "./types";
 import type {
   SidebarItemDoc,
   SidebarItem,
   SidebarItemCategory,
   SidebarItemCategoryLink,
-} from './sidebars/types';
+} from "./sidebars/types";
 import type {
   PropSidebars,
   PropVersionMetadata,
@@ -25,7 +25,7 @@ import type {
   PropVersionDocs,
   DocMetadata,
   LoadedVersion,
-} from '@niklasp/plugin-content-tutorials';
+} from "@niklasp/plugin-content-tutorials";
 
 export function toSidebarsProp(loadedVersion: LoadedVersion): PropSidebars {
   const docsById = createDocsByIdIndex(loadedVersion.tutorials);
@@ -36,7 +36,7 @@ export function toSidebarsProp(loadedVersion: LoadedVersion): PropSidebars {
       throw new Error(
         `Invalid sidebars file. The document with id "${docId}" was used in the sidebar, but no document with this id could be found.
 Available document ids are:
-- ${Object.keys(docsById).sort().join('\n- ')}`,
+- ${Object.keys(docsById).sort().join("\n- ")}`
       );
     }
     return docMetadata;
@@ -47,10 +47,10 @@ Available document ids are:
     const {
       title,
       permalink,
-      frontMatter: {sidebar_label: sidebarLabel},
+      frontMatter: { sidebar_label: sidebarLabel },
     } = docMetadata;
     return {
-      type: 'link',
+      type: "link",
       label: sidebarLabel ?? item.label ?? title,
       href: permalink,
       className: item.className,
@@ -61,12 +61,12 @@ Available document ids are:
   };
 
   function getCategoryLinkHref(
-    link: SidebarItemCategoryLink | undefined,
+    link: SidebarItemCategoryLink | undefined
   ): string | undefined {
     switch (link?.type) {
-      case 'tutorial':
+      case "tutorial":
         return getDocById(link.id).permalink;
-      case 'generated-index':
+      case "generated-index":
         return link.permalink;
       default:
         return undefined;
@@ -74,10 +74,10 @@ Available document ids are:
   }
 
   function getCategoryLinkCustomProps(
-    link: SidebarItemCategoryLink | undefined,
+    link: SidebarItemCategoryLink | undefined
   ) {
     switch (link?.type) {
-      case 'tutorial':
+      case "tutorial":
         return getDocById(link.id).frontMatter.sidebar_custom_props;
       default:
         return undefined;
@@ -85,26 +85,26 @@ Available document ids are:
   }
 
   function convertCategory(item: SidebarItemCategory): PropSidebarItemCategory {
-    const {link, ...rest} = item;
+    const { link, ...rest } = item;
     const href = getCategoryLinkHref(link);
     const customProps = item.customProps ?? getCategoryLinkCustomProps(link);
 
     return {
       ...rest,
       items: item.items.map(normalizeItem),
-      ...(href && {href}),
-      ...(customProps && {customProps}),
+      ...(href && { href }),
+      ...(customProps && { customProps }),
     };
   }
 
   function normalizeItem(item: SidebarItem): PropSidebarItem {
     switch (item.type) {
-      case 'category':
+      case "category":
         return convertCategory(item);
-      case 'ref':
-      case 'tutorial':
+      case "ref":
+      case "tutorial":
         return convertDocLink(item);
-      case 'link':
+      case "link":
       default:
         return item;
     }
@@ -114,7 +114,7 @@ Available document ids are:
   // form of 'link' or 'category' only.
   // This is what will be passed as props to the UI component.
   return _.mapValues(loadedVersion.sidebars, (items) =>
-    items.map(normalizeItem),
+    items.map(normalizeItem)
   );
 }
 
@@ -128,13 +128,13 @@ function toVersionDocsProp(loadedVersion: LoadedVersion): PropVersionDocs {
         description: tutorial.description,
         sidebar: tutorial.sidebar,
       },
-    ]),
+    ])
   );
 }
 
 export function toVersionMetadataProp(
   pluginId: string,
-  loadedVersion: LoadedVersion,
+  loadedVersion: LoadedVersion
 ): PropVersionMetadata {
   return {
     pluginId,
@@ -161,7 +161,7 @@ export function toTagDocListProp({
 }): PropTagDocList {
   function toDocListProp(): PropTagDocListDoc[] {
     const list = _.compact(
-      tag.tutorialIds.map((id) => tutorials.find((doc:any) => doc.id === id)),
+      tag.tutorialIds.map((id) => tutorials.find((doc: any) => doc.id === id))
     );
     // Sort docs by title
     list.sort((doc1, doc2) => doc1.title.localeCompare(doc2.title));
@@ -179,5 +179,6 @@ export function toTagDocListProp({
     allTagsPath,
     count: tag.tutorialIds.length,
     items: toDocListProp(),
+    unlisted: false,
   };
 }
