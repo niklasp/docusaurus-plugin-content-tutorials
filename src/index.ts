@@ -55,6 +55,7 @@ import type {
   FullVersion,
 } from "./types";
 import type { RuleSetRule } from "webpack";
+import { getTaggedTutorials } from "./tags";
 
 export default async function pluginContentDocs(
   context: LoadContext,
@@ -70,7 +71,7 @@ export default async function pluginContentDocs(
 
   const pluginDataDirRoot = path.join(
     generatedFilesDir,
-    "docusaurus-plugin-content-docs"
+    "docusaurus-plugin-content-tutorials"
   );
   const dataDir = path.join(pluginDataDirRoot, pluginId);
   const aliasedSource = (source: string) =>
@@ -80,7 +81,7 @@ export default async function pluginContentDocs(
   const env = process.env.NODE_ENV as DocEnv;
 
   return {
-    name: "docusaurus-plugin-content-docs",
+    name: "docusaurus-plugin-content-tutorials",
 
     extendCli(cli) {
       const isDefaultPluginId = pluginId === DEFAULT_PLUGIN_ID;
@@ -236,14 +237,14 @@ export default async function pluginContentDocs(
       let versionTags: any = [];
 
       if (versions[0] !== undefined) {
-        versionTags = getTaggedTutorials(versions[0].tutorials);
+        versionTags = getTaggedTutorials(versions[0].docs);
       }
 
       actions.setGlobalData({
         path: normalizeUrl([baseUrl, options.routeBasePath]),
         versions: versions.map(toGlobalDataVersion),
         breadcrumbs: options.breadcrumbs,
-        tags: 
+        tags: versionTags,
       });
     },
 

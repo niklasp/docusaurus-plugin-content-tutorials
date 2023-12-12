@@ -8,10 +8,10 @@
 import _, { pick } from "lodash";
 import { getTagVisibility, groupTaggedItems } from "@docusaurus/utils";
 import type { VersionTags } from "./types";
-import { TutorialTag } from "@niklasp/plugin-content-tutorials";
 import type {
   DocMetadata,
   DocMetadataBase,
+  TutorialTag,
 } from "@docusaurus/plugin-content-docs";
 
 type TaggedItemGroup<Item> = {
@@ -45,11 +45,16 @@ export function groupTaggedItemsByLabel(
     >;
   } = {};
 
+  // console.log("items", items);
+
   items.forEach((item) => {
     getItemTags(item).forEach((tag) => {
+      // console.log("tag", tag);
       const tagDescription = items.find(
         (item) => item.permalink === tag.permalink
       )?.description;
+
+      // console.log("tagDescription", tagDescription);
 
       // Init missing tag groups
       // TODO: it's not really clear what should be the behavior if 2 tags have
@@ -77,6 +82,8 @@ export function groupTaggedItemsByLabel(
       });
     });
   });
+
+  // console.log("result", result);
 
   // If user add twice the same tag to a md doc (weird but possible),
   // we don't want the item to appear twice in the list...
@@ -108,6 +115,5 @@ export function getTaggedTutorials(tutorials: DocMetadata[]): any {
     tutorials,
     (tutorial) => tutorial.tags
   );
-
   return groups;
 }
