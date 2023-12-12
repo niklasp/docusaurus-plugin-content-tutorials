@@ -6,13 +6,14 @@
  */
 
 import _, { pick } from "lodash";
-import { getTagVisibility, groupTaggedItems } from "@docusaurus/utils";
+import { groupBy } from "lodash";
+import { groupTaggedItems } from "@docusaurus/utils";
 import type { VersionTags } from "./types";
-import { TutorialTag } from "@niklasp/plugin-content-tutorials";
 import type {
   DocMetadata,
+  TutorialTag,
   DocMetadataBase,
-} from "@docusaurus/plugin-content-docs";
+} from "@niklasp/plugin-content-tutorials";
 
 type TaggedItemGroup<Item> = {
   tag: TutorialTag;
@@ -87,20 +88,13 @@ export function groupTaggedItemsByLabel(
   return result;
 }
 
-export function getVersionTags(docs: DocMetadata[]): VersionTags {
-  const groups = groupTaggedItems(docs, (doc) => doc.tags);
-  return _.mapValues(groups, ({ tag, items: tagDocs }) => {
-    const tagVisibility = getTagVisibility({
-      items: tagDocs,
-      isUnlisted: (item) => item.unlisted,
-    });
-    return {
-      label: tag.label,
-      docIds: tagVisibility.listedItems.map((item) => item.id),
-      permalink: tag.permalink,
-      unlisted: tagVisibility.unlisted,
-    };
-  });
+export function getVersionTags(tutorials: DocMetadata[]): VersionTags {
+  const groups = groupTaggedItems(tutorials, (tutorial) => tutorial.tags);
+  return _.mapValues(groups, (group) => ({
+    label: group.tag.label,
+    tutorialIds: group.items.map((item) => item.id),
+    permalink: group.tag.permalink,
+  }));
 }
 
 export function getTaggedTutorials(tutorials: DocMetadata[]): any {
