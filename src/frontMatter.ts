@@ -11,8 +11,9 @@ import {
   FrontMatterTagsSchema,
   FrontMatterTOCHeadingLevels,
   validateFrontMatter,
+  ContentVisibilitySchema,
 } from '@docusaurus/utils-validation';
-import type {TutorialFrontMatter} from '@niklasp/plugin-content-tutorials';
+import type {DocFrontMatter} from '@docusaurus/plugin-content-docs';
 
 const FrontMatterLastUpdateErrorMessage =
   '{{#label}} does not look like a valid front matter FileChange object. Please use a FileChange object (with an author and/or date).';
@@ -21,7 +22,7 @@ const FrontMatterLastUpdateErrorMessage =
 // We don't want default values to magically appear in doc metadata and props
 // While the user did not provide those values explicitly
 // We use default values in code instead
-const TutorialFrontMatterSchema = Joi.object<TutorialFrontMatter>({
+const DocFrontMatterSchema = Joi.object<DocFrontMatter>({
   id: Joi.string(),
   // See https://github.com/facebook/docusaurus/issues/4591#issuecomment-822372398
   title: Joi.string().allow(''),
@@ -43,7 +44,6 @@ const TutorialFrontMatterSchema = Joi.object<TutorialFrontMatter>({
   parse_number_prefixes: Joi.boolean(),
   pagination_next: Joi.string().allow(null),
   pagination_prev: Joi.string().allow(null),
-  draft: Joi.boolean(),
   ...FrontMatterTOCHeadingLevels,
   last_update: Joi.object({
     author: Joi.string(),
@@ -54,10 +54,12 @@ const TutorialFrontMatterSchema = Joi.object<TutorialFrontMatter>({
       'object.missing': FrontMatterLastUpdateErrorMessage,
       'object.base': FrontMatterLastUpdateErrorMessage,
     }),
-}).unknown();
+})
+  .unknown()
+  .concat(ContentVisibilitySchema);
 
-export function validateTutorialFrontMatter(frontMatter: {
+export function validateDocFrontMatter(frontMatter: {
   [key: string]: unknown;
-}): TutorialFrontMatter {
-  return validateFrontMatter(frontMatter, TutorialFrontMatterSchema);
+}): DocFrontMatter {
+  return validateFrontMatter(frontMatter, DocFrontMatterSchema);
 }

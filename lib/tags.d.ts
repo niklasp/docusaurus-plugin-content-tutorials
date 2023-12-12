@@ -4,8 +4,9 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+/// <reference path="../src/plugin-content-docs.d.ts" />
 import type { VersionTags } from "./types";
-import type { DocMetadata, TutorialTag, DocMetadataBase } from "@niklasp/plugin-content-tutorials";
+import type { DocMetadata, DocMetadataBase, TutorialTag } from "@docusaurus/plugin-content-docs";
 type TaggedItemGroup<Item> = {
     tag: TutorialTag;
     items: Item[];
@@ -26,6 +27,6 @@ export declare function groupTaggedItemsByLabel(items: readonly DocMetadataBase[
 getItemTags: (item: DocMetadataBase) => readonly TutorialTag[]): {
     [permalink: string]: TaggedItemGroup<DocMetadataBase | Partial<DocMetadataBase>>;
 };
-export declare function getVersionTags(tutorials: DocMetadata[]): VersionTags;
+export declare function getVersionTags(docs: DocMetadata[]): VersionTags;
 export declare function getTaggedTutorials(tutorials: DocMetadata[]): any;
 export {};

@@ -4,8 +4,9 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+/// <reference path="../../src/plugin-content-docs.d.ts" />
 import type { Sidebars, Sidebar, SidebarItem, SidebarItemCategory, SidebarItemLink, SidebarItemDoc, SidebarCategoriesShorthand, SidebarItemConfig, SidebarItemCategoryWithGeneratedIndex, SidebarNavigationItem } from './types';
-import type { DocMetadataBase, PropNavigationLink } from '@niklasp/plugin-content-tutorials';
+import type { DocMetadataBase, PropNavigationLink, VersionMetadata } from '@docusaurus/plugin-content-docs';
 export declare function isCategoriesShorthand(item: SidebarItemConfig): item is SidebarCategoriesShorthand;
 export declare function transformSidebarItems(sidebar: Sidebar, updateFn: (item: SidebarItem) => SidebarItem): Sidebar;
 export declare function collectSidebarDocItems(sidebar: Sidebar): SidebarItemDoc[];
@@ -29,7 +30,11 @@ export type SidebarsUtils = {
     sidebars: Sidebars;
     getFirstDocIdOfFirstSidebar: () => string | undefined;
     getSidebarNameByDocId: (docId: string) => string | undefined;
-    getDocNavigation: (unversionedId: string, versionedId: string, displayedSidebar: string | null | undefined) => SidebarNavigation;
+    getDocNavigation: (params: {
+        docId: string;
+        displayedSidebar: string | null | undefined;
+        unlistedIds: Set<string>;
+    }) => SidebarNavigation;
     getCategoryGeneratedIndexList: () => SidebarItemCategoryWithGeneratedIndex[];
     getCategoryGeneratedIndexNavigation: (categoryGeneratedIndexPermalink: string) => SidebarNavigation;
     /**
@@ -38,7 +43,7 @@ export type SidebarsUtils = {
      * `displayed_sidebar` to make it displayed. Pretty weird but valid use-case
      */
     getFirstLink: (sidebarId: string) => {
-        type: 'tutorial';
+        type: 'doc';
         id: string;
         label: string;
     } | {
@@ -46,7 +51,15 @@ export type SidebarsUtils = {
         permalink: string;
         label: string;
     } | undefined;
-    checkSidebarsDocIds: (validDocIds: string[], sidebarFilePath: string) => void;
+    checkLegacyVersionedSidebarNames: ({ versionMetadata, }: {
+        sidebarFilePath: string;
+        versionMetadata: VersionMetadata;
+    }) => void;
+    checkSidebarsDocIds: ({ allDocIds, sidebarFilePath, versionMetadata, }: {
+        allDocIds: string[];
+        sidebarFilePath: string;
+        versionMetadata: VersionMetadata;
+    }) => void;
 };
 export declare function createSidebarsUtils(sidebars: Sidebars): SidebarsUtils;
 export declare function toDocNavigationLink(doc: DocMetadataBase): PropNavigationLink;

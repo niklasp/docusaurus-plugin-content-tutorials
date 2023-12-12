@@ -4,6 +4,6 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { FullVersion } from './types';
-import type { GlobalVersion } from './client/index';
+import type { FullVersion } from "./types";
+import type { GlobalVersion } from "./client";
 export declare function toGlobalDataVersion(version: FullVersion): GlobalVersion;

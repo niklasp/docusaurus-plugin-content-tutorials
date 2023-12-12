@@ -26,46 +26,42 @@ import {
   processDocMetadata,
   addDocNavigation,
   type DocEnv,
+  createDocsByIdIndex,
 } from "./docs";
-import { readVersionsMetadata } from "./versions";
+import { readVersionsMetadata, toFullVersion } from "./versions";
 import { cliDocsVersionCommand } from "./cli";
 import { VERSIONS_JSON_FILE } from "./constants";
 import { toGlobalDataVersion } from "./globalData";
-import { toTagDocListProp } from "./props";
-import { getCategoryGeneratedIndexMetadataList } from "./categoryGeneratedIndex";
 import {
   translateLoadedContent,
   getLoadedContentTranslationFiles,
 } from "./translations";
-import { getTaggedTutorials, getVersionTags } from "./tags";
-import { createVersionRoutes } from "./routes";
+import { createAllRoutes } from "./routes";
 import { createSidebarsUtils } from "./sidebars/utils";
 
 import type {
-  PropTagsListPage,
   PluginOptions,
   DocMetadataBase,
   VersionMetadata,
-  TutorialFrontMatter,
+  DocFrontMatter,
   LoadedContent,
   LoadedVersion,
-} from "@niklasp/plugin-content-tutorials";
+} from "@docusaurus/plugin-content-docs";
 import type { LoadContext, Plugin } from "@docusaurus/types";
 import type {
   SourceToPermalink,
   DocFile,
   DocsMarkdownOption,
-  VersionTag,
   FullVersion,
 } from "./types";
 import type { RuleSetRule } from "webpack";
+import { getTaggedTutorials } from "./tags";
 
-export default async function pluginContentTutorials(
+export default async function pluginContentDocs(
   context: LoadContext,
   options: PluginOptions
 ): Promise<Plugin<LoadedContent>> {
   const { siteDir, generatedFilesDir, baseUrl, siteConfig } = context;
-
   // Mutate options to resolve sidebar path according to siteDir
   options.sidebarPath = resolveSidebarPathOption(siteDir, options.sidebarPath);
 
@@ -79,7 +75,10 @@ export default async function pluginContentTutorials(
   );
   const dataDir = path.join(pluginDataDirRoot, pluginId);
   const aliasedSource = (source: string) =>
-    `~tutorials/${posixPath(path.relative(pluginDataDirRoot, source))}`;
+    `~docs/${posixPath(path.relative(pluginDataDirRoot, source))}`;
+
+  // TODO env should be injected into all plugins
+  const env = process.env.NODE_ENV as DocEnv;
 
   return {
     name: "docusaurus-plugin-content-tutorials",
@@ -90,8 +89,8 @@ export default async function pluginContentTutorials(
       // Need to create one distinct command per plugin instance
       // otherwise 2 instances would try to execute the command!
       const command = isDefaultPluginId
-        ? "tutorials:version"
-        : `tutorials:version:${pluginId}`;
+        ? "docs:version"
+        : `docs:version:${pluginId}`;
       const commandDescription = isDefaultPluginId
         ? "Tag a new docs version"
         : `Tag a new docs version (${pluginId})`;
@@ -112,7 +111,7 @@ export default async function pluginContentTutorials(
     getPathsToWatch() {
       function getVersionPathsToWatch(version: VersionMetadata): string[] {
         const result = [
-          ...options.include.flatMap((pattern: any) =>
+          ...options.include.flatMap((pattern) =>
             getContentPathList(version).map(
               (docsDirPath) => `${docsDirPath}/${pattern}`
             )
@@ -149,7 +148,7 @@ export default async function pluginContentTutorials(
             versionMetadata,
             context,
             options,
-            env: process.env.NODE_ENV as DocEnv,
+            env,
           });
         }
         return Promise.all(docFiles.map(processVersionDoc));
@@ -162,15 +161,15 @@ export default async function pluginContentTutorials(
           versionMetadata
         );
 
-        const [drafts, tutorials] = _.partition(
-          docsBase,
-          (tutorial) => tutorial.draft
-        );
+        // TODO we only ever need draftIds in further code, not full draft items
+        // To simplify and prevent mistakes, avoid exposing draft
+        // replace draft=>draftIds in content loaded
+        const [drafts, docs] = _.partition(docsBase, (doc: any) => doc.draft);
 
         const sidebars = await loadSidebars(versionMetadata.sidebarFilePath, {
           sidebarItemsGenerator: options.sidebarItemsGenerator,
           numberPrefixParser: options.numberPrefixParser,
-          tutorials,
+          docs,
           drafts,
           version: versionMetadata,
           sidebarOptions: {
@@ -182,13 +181,25 @@ export default async function pluginContentTutorials(
 
         const sidebarsUtils = createSidebarsUtils(sidebars);
 
+        const docsById = createDocsByIdIndex(docs);
+        const allDocIds = Object.keys(docsById);
+
+        sidebarsUtils.checkLegacyVersionedSidebarNames({
+          sidebarFilePath: versionMetadata.sidebarFilePath as string,
+          versionMetadata,
+        });
+        sidebarsUtils.checkSidebarsDocIds({
+          allDocIds,
+          sidebarFilePath: versionMetadata.sidebarFilePath as string,
+          versionMetadata,
+        });
+
         return {
           ...versionMetadata,
-          tutorials: addDocNavigation(
-            tutorials,
+          docs: addDocNavigation({
+            docs,
             sidebarsUtils,
-            versionMetadata.sidebarFilePath as string
-          ),
+          }),
           drafts,
           sidebars,
         };
@@ -213,114 +224,31 @@ export default async function pluginContentTutorials(
     },
 
     async contentLoaded({ content, actions }) {
-      const { loadedVersions } = content;
-      const {
-        docLayoutComponent,
-        docItemComponent,
-        docCategoryGeneratedIndexComponent,
-        breadcrumbs,
-      } = options;
-      const { addRoute, createData, setGlobalData } = actions;
-      const versions: FullVersion[] = loadedVersions.map((version: any) => {
-        const sidebarsUtils = createSidebarsUtils(version.sidebars);
-        return {
-          ...version,
-          sidebarsUtils,
-          categoryGeneratedIndices: getCategoryGeneratedIndexMetadataList({
-            tutorials: version.tutorials,
-            sidebarsUtils,
-          }),
-        };
+      const versions: FullVersion[] = content.loadedVersions.map(toFullVersion);
+
+      await createAllRoutes({
+        baseUrl,
+        versions,
+        options,
+        actions,
+        aliasedSource,
       });
-
-      async function createVersionTagsRoutes(version: FullVersion) {
-        const versionTags = getVersionTags(version.tutorials);
-
-        // TODO tags should be a sub route of the version route
-        async function createTagsListPage() {
-          const tagsProp: PropTagsListPage["tags"] = Object.values(
-            versionTags
-          ).map((tagValue) => ({
-            label: tagValue.label,
-            permalink: tagValue.permalink,
-            count: tagValue.tutorialIds.length,
-          }));
-
-          // Only create /tags page if there are tags.
-          if (tagsProp.length > 0) {
-            const tagsPropPath = await createData(
-              `${docuHash(`tags-list-${version.versionName}-prop`)}.json`,
-              JSON.stringify(tagsProp, null, 2)
-            );
-            addRoute({
-              path: version.tagsPath,
-              exact: true,
-              component: options.docTagsListComponent,
-              modules: {
-                tags: aliasedSource(tagsPropPath),
-              },
-            });
-          }
-        }
-
-        // TODO tags should be a sub route of the version route
-        async function createTagDocListPage(tag: VersionTag) {
-          const tagProps = toTagDocListProp({
-            allTagsPath: version.tagsPath,
-            tag,
-            tutorials: version.tutorials,
-          });
-          const tagPropPath = await createData(
-            `${docuHash(`tag-${tag.permalink}`)}.json`,
-            JSON.stringify(tagProps, null, 2)
-          );
-          addRoute({
-            path: tag.permalink,
-            component: options.docTagDocListComponent,
-            exact: true,
-            modules: {
-              tag: aliasedSource(tagPropPath),
-            },
-          });
-        }
-
-        await createTagsListPage();
-        await Promise.all(Object.values(versionTags).map(createTagDocListPage));
-      }
-
-      await Promise.all(
-        versions.map((version) =>
-          createVersionRoutes({
-            version,
-            docItemComponent,
-            docLayoutComponent,
-            docCategoryGeneratedIndexComponent,
-            pluginId,
-            aliasedSource,
-            actions,
-          })
-        )
-      );
-
-      // TODO tags should be a sub route of the version route
-      await Promise.all(versions.map(createVersionTagsRoutes));
 
       let versionTags: any = [];
 
       if (versions[0] !== undefined) {
-        versionTags = getTaggedTutorials(versions[0].tutorials);
+        versionTags = getTaggedTutorials(versions[0].docs);
       }
 
-      setGlobalData({
+      actions.setGlobalData({
         path: normalizeUrl([baseUrl, options.routeBasePath]),
         versions: versions.map(toGlobalDataVersion),
-        breadcrumbs,
+        breadcrumbs: options.breadcrumbs,
         tags: versionTags,
       });
     },
 
     configureWebpack(_config, isServer, utils, content) {
-      const { getJSLoader } = utils;
       const {
         rehypePlugins,
         remarkPlugins,
@@ -329,7 +257,7 @@ export default async function pluginContentTutorials(
       } = options;
 
       function getSourceToPermalink(): SourceToPermalink {
-        const allDocs = content.loadedVersions.flatMap((v) => v.tutorials);
+        const allDocs = content.loadedVersions.flatMap((v) => v.docs);
         return Object.fromEntries(
           allDocs.map(({ source, permalink }) => [source, permalink])
         );
@@ -355,7 +283,6 @@ export default async function pluginContentTutorials(
           test: /\.mdx?$/i,
           include: contentDirs,
           use: [
-            getJSLoader({ isServer }),
             {
               loader: require.resolve("@docusaurus/mdx-loader"),
               options: {
@@ -383,7 +310,7 @@ export default async function pluginContentTutorials(
                 createAssets: ({
                   frontMatter,
                 }: {
-                  frontMatter: TutorialFrontMatter;
+                  frontMatter: DocFrontMatter;
                 }) => ({
                   image: frontMatter.image,
                 }),
@@ -407,7 +334,7 @@ export default async function pluginContentTutorials(
         ],
         resolve: {
           alias: {
-            "~tutorials": pluginDataDirRoot,
+            "~docs": pluginDataDirRoot,
           },
         },
         module: {

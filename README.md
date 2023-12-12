@@ -1,7 +1,7 @@
-# `@niklasp/docusaurus-plugin-content-tutorials`
+# `@docusaurus/plugin-content-docs`
 
-Tutorials plugin for Docusaurus. In use at [polkadot.study](https://polkadot.study)
+Docs plugin for Docusaurus.
 
 ## Usage
 
-This is a work in progress and should not be used in production.
+See [plugin-content-docs documentation](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs).

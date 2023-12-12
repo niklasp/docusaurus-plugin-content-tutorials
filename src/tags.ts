@@ -6,14 +6,13 @@
  */
 
 import _, { pick } from "lodash";
-import { groupBy } from "lodash";
-import { groupTaggedItems } from "@docusaurus/utils";
+import { getTagVisibility, groupTaggedItems } from "@docusaurus/utils";
 import type { VersionTags } from "./types";
 import type {
   DocMetadata,
-  TutorialTag,
   DocMetadataBase,
-} from "@niklasp/plugin-content-tutorials";
+  TutorialTag,
+} from "@docusaurus/plugin-content-docs";
 
 type TaggedItemGroup<Item> = {
   tag: TutorialTag;
@@ -46,11 +45,16 @@ export function groupTaggedItemsByLabel(
     >;
   } = {};
 
+  // console.log("items", items);
+
   items.forEach((item) => {
     getItemTags(item).forEach((tag) => {
+      // console.log("tag", tag);
       const tagDescription = items.find(
         (item) => item.permalink === tag.permalink
       )?.description;
+
+      // console.log("tagDescription", tagDescription);
 
       // Init missing tag groups
       // TODO: it's not really clear what should be the behavior if 2 tags have
@@ -79,6 +83,8 @@ export function groupTaggedItemsByLabel(
     });
   });
 
+  // console.log("result", result);
+
   // If user add twice the same tag to a md doc (weird but possible),
   // we don't want the item to appear twice in the list...
   Object.values(result).forEach((group) => {
@@ -88,13 +94,20 @@ export function groupTaggedItemsByLabel(
   return result;
 }
 
-export function getVersionTags(tutorials: DocMetadata[]): VersionTags {
-  const groups = groupTaggedItems(tutorials, (tutorial) => tutorial.tags);
-  return _.mapValues(groups, (group) => ({
-    label: group.tag.label,
-    tutorialIds: group.items.map((item) => item.id),
-    permalink: group.tag.permalink,
-  }));
+export function getVersionTags(docs: DocMetadata[]): VersionTags {
+  const groups = groupTaggedItems(docs, (doc) => doc.tags);
+  return _.mapValues(groups, ({ tag, items: tagDocs }) => {
+    const tagVisibility = getTagVisibility({
+      items: tagDocs,
+      isUnlisted: (item) => item.unlisted,
+    });
+    return {
+      label: tag.label,
+      docIds: tagVisibility.listedItems.map((item) => item.id),
+      permalink: tag.permalink,
+      unlisted: tagVisibility.unlisted,
+    };
+  });
 }
 
 export function getTaggedTutorials(tutorials: DocMetadata[]): any {
@@ -102,6 +115,5 @@ export function getTaggedTutorials(tutorials: DocMetadata[]): any {
     tutorials,
     (tutorial) => tutorial.tags
   );
-
   return groups;
 }

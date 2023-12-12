@@ -18,7 +18,7 @@ import {
 import type {
   LoadedVersion,
   LoadedContent,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
 import type {
   Sidebar,
   SidebarItemCategory,
@@ -38,23 +38,6 @@ function getVersionFileName(versionName: string): string {
   // I don't like this "version-" prefix,
   // but it's for consistency with site/versioned_docs
   return `version-${versionName}`;
-}
-
-// TODO legacy, the sidebar name is like "version-2.0.0-alpha.66/docs"
-// input: "version-2.0.0-alpha.66/docs"
-// output: "docs"
-function getNormalizedSidebarName({
-  versionName,
-  sidebarName,
-}: {
-  versionName: string;
-  sidebarName: string;
-}): string {
-  if (versionName === CURRENT_VERSION_NAME || !sidebarName.includes('/')) {
-    return sidebarName;
-  }
-  const [, ...rest] = sidebarName.split('/');
-  return rest.join('/');
 }
 
 function getSidebarTranslationFileContent(
@@ -183,7 +166,7 @@ function translateSidebar({
             ?.message ?? item.label,
       };
     }
-    if ((item.type === 'tutorial' || item.type === 'ref') && item.translatable) {
+    if ((item.type === 'doc' || item.type === 'ref') && item.translatable) {
       return {
         ...item,
         label:
@@ -199,13 +182,9 @@ function getSidebarsTranslations(
   version: LoadedVersion,
 ): TranslationFileContent {
   return mergeTranslations(
-    Object.entries(version.sidebars).map(([sidebarName, sidebar]) => {
-      const normalizedSidebarName = getNormalizedSidebarName({
-        sidebarName,
-        versionName: version.versionName,
-      });
-      return getSidebarTranslationFileContent(sidebar, normalizedSidebarName);
-    }),
+    Object.entries(version.sidebars).map(([sidebarName, sidebar]) =>
+      getSidebarTranslationFileContent(sidebar, sidebarName),
+    ),
   );
 }
 function translateSidebars(
@@ -215,10 +194,7 @@ function translateSidebars(
   return _.mapValues(version.sidebars, (sidebar, sidebarName) =>
     translateSidebar({
       sidebar,
-      sidebarName: getNormalizedSidebarName({
-        sidebarName,
-        versionName: version.versionName,
-      }),
+      sidebarName,
       sidebarsTranslations,
     }),
   );

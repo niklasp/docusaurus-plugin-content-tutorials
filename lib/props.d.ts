@@ -4,12 +4,19 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { VersionTag } from './types';
-import type { PropSidebars, PropVersionMetadata, PropTagDocList, DocMetadata, LoadedVersion } from '@niklasp/plugin-content-tutorials';
+/// <reference path="../src/plugin-content-docs.d.ts" />
+import type { VersionTag, VersionTags } from './types';
+import type { SidebarItemDoc } from './sidebars/types';
+import type { PropSidebars, PropVersionMetadata, PropTagDocList, PropTagsListPage, PropSidebarItemLink, DocMetadata, LoadedVersion } from '@docusaurus/plugin-content-docs';
+export declare function toSidebarDocItemLinkProp({ item, doc, }: {
+    item: SidebarItemDoc;
+    doc: Pick<DocMetadata, 'id' | 'title' | 'permalink' | 'unlisted' | 'frontMatter'>;
+}): PropSidebarItemLink;
 export declare function toSidebarsProp(loadedVersion: LoadedVersion): PropSidebars;
 export declare function toVersionMetadataProp(pluginId: string, loadedVersion: LoadedVersion): PropVersionMetadata;
-export declare function toTagDocListProp({ allTagsPath, tag, tutorials, }: {
+export declare function toTagDocListProp({ allTagsPath, tag, docs, }: {
     allTagsPath: string;
     tag: VersionTag;
-    tutorials: DocMetadata[];
+    docs: DocMetadata[];
 }): PropTagDocList;
+export declare function toTagsListTagsProp(versionTags: VersionTags): PropTagsListPage['tags'];

@@ -19,7 +19,7 @@ import {isCategoryIndex, toCategoryIndexMatcherParam} from './docs';
 import type {
   NumberPrefixParser,
   DocMetadataBase,
-} from '@niklasp/plugin-content-tutorials';
+} from '@docusaurus/plugin-content-docs';
 
 export default function getSlug({
   baseID,

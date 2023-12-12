@@ -5,42 +5,45 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import logger from '@docusaurus/logger';
+import logger from "@docusaurus/logger";
 import {
   Joi,
   RemarkPluginsSchema,
   RehypePluginsSchema,
   AdmonitionsSchema,
+  RouteBasePathSchema,
   URISchema,
-} from '@docusaurus/utils-validation';
-import {GlobExcludeDefault} from '@docusaurus/utils';
-import {DefaultSidebarItemsGenerator} from './sidebars/generator';
+} from "@docusaurus/utils-validation";
+import { GlobExcludeDefault } from "@docusaurus/utils";
+import { DefaultSidebarItemsGenerator } from "./sidebars/generator";
 import {
   DefaultNumberPrefixParser,
   DisabledNumberPrefixParser,
-} from './numberPrefix';
-import type {OptionValidationContext} from '@docusaurus/types';
-import type {PluginOptions, Options} from '@niklasp/plugin-content-tutorials';
+} from "./numberPrefix";
+import type { OptionValidationContext } from "@docusaurus/types";
+import type { PluginOptions, Options } from "@docusaurus/plugin-content-docs";
 
-export const DEFAULT_OPTIONS: Omit<PluginOptions, 'id' | 'sidebarPath'> = {
-  path: 'tutorials', // Path to data on filesystem, relative to site dir.
-  routeBasePath: 'tutorials', // URL Route.
-  tagsBasePath: 'tags', // URL Tags Route.
-  include: ['**/*.{md,mdx}'], // Extensions to include.
+export const DEFAULT_OPTIONS: Omit<PluginOptions, "id" | "sidebarPath"> = {
+  path: "tutorials", // Path to data on filesystem, relative to site dir.
+  routeBasePath: "tutorials", // URL Route.
+  tagsBasePath: "tags", // URL Tags Route.
+  include: ["**/*.{md,mdx}"], // Extensions to include.
   exclude: GlobExcludeDefault,
   sidebarItemsGenerator: DefaultSidebarItemsGenerator,
   numberPrefixParser: DefaultNumberPrefixParser,
-  docLayoutComponent: '@theme/DocPage',
-  docItemComponent: '@theme/DocItem',
-  docTagDocListComponent: '@theme/DocTagDocListPage',
-  docTagsListComponent: '@theme/DocTagsListPage',
-  docCategoryGeneratedIndexComponent: '@theme/DocCategoryGeneratedIndexPage',
+  docsRootComponent: "@theme/DocsRoot",
+  docVersionRootComponent: "@theme/DocVersionRoot",
+  docRootComponent: "@theme/DocRoot",
+  docItemComponent: "@theme/DocItem",
+  docTagDocListComponent: "@theme/DocTagDocListPage",
+  docTagsListComponent: "@theme/DocTagsListPage",
+  docCategoryGeneratedIndexComponent: "@theme/DocCategoryGeneratedIndexPage",
   remarkPlugins: [],
   rehypePlugins: [],
   beforeDefaultRemarkPlugins: [],
   beforeDefaultRehypePlugins: [],
-  showLastUpdateTime: true,
-  showLastUpdateAuthor: true,
+  showLastUpdateTime: false,
+  showLastUpdateAuthor: false,
   admonitions: true,
   includeCurrentVersion: true,
   disableVersioning: false,
@@ -54,9 +57,9 @@ export const DEFAULT_OPTIONS: Omit<PluginOptions, 'id' | 'sidebarPath'> = {
 };
 
 const VersionOptionsSchema = Joi.object({
-  path: Joi.string().allow('').optional(),
+  path: Joi.string().allow("").optional(),
   label: Joi.string().optional(),
-  banner: Joi.string().equal('none', 'unreleased', 'unmaintained').optional(),
+  banner: Joi.string().equal("none", "unreleased", "unmaintained").optional(),
   badge: Joi.boolean().optional(),
   className: Joi.string().optional(),
   noIndex: Joi.boolean().optional(),
@@ -71,14 +74,11 @@ const OptionsSchema = Joi.object<PluginOptions>({
   editUrl: Joi.alternatives().try(URISchema, Joi.function()),
   editCurrentVersion: Joi.boolean().default(DEFAULT_OPTIONS.editCurrentVersion),
   editLocalizedFiles: Joi.boolean().default(DEFAULT_OPTIONS.editLocalizedFiles),
-  routeBasePath: Joi.string()
-    // '' not allowed, see https://github.com/facebook/docusaurus/issues/3374
-    // .allow('') ""
-    .default(DEFAULT_OPTIONS.routeBasePath),
+  routeBasePath: RouteBasePathSchema.default(DEFAULT_OPTIONS.routeBasePath),
   tagsBasePath: Joi.string().default(DEFAULT_OPTIONS.tagsBasePath),
   // @ts-expect-error: deprecated
   homePageId: Joi.any().forbidden().messages({
-    'any.unknown':
+    "any.unknown":
       'The docs plugin option homePageId is not supported anymore. To make a doc the "home", please add "slug: /" in its front matter. See: https://docusaurus.io/docs/next/docs-introduction#home-page-docs',
   }),
 
@@ -86,10 +86,10 @@ const OptionsSchema = Joi.object<PluginOptions>({
   exclude: Joi.array().items(Joi.string()).default(DEFAULT_OPTIONS.exclude),
   sidebarPath: Joi.alternatives().try(
     Joi.boolean().invalid(true),
-    Joi.string(),
+    Joi.string()
   ),
   sidebarItemsGenerator: Joi.function().default(
-    () => DEFAULT_OPTIONS.sidebarItemsGenerator,
+    () => DEFAULT_OPTIONS.sidebarItemsGenerator
   ),
   sidebarCollapsible: Joi.boolean().default(DEFAULT_OPTIONS.sidebarCollapsible),
   sidebarCollapsed: Joi.boolean().default(DEFAULT_OPTIONS.sidebarCollapsed),
@@ -99,37 +99,41 @@ const OptionsSchema = Joi.object<PluginOptions>({
       // Convert boolean values to functions
       Joi.alternatives().conditional(Joi.boolean(), {
         then: Joi.custom((val: boolean) =>
-          val ? DefaultNumberPrefixParser : DisabledNumberPrefixParser,
+          val ? DefaultNumberPrefixParser : DisabledNumberPrefixParser
         ),
-      }),
+      })
     )
     .default(() => DEFAULT_OPTIONS.numberPrefixParser),
-  docLayoutComponent: Joi.string().default(DEFAULT_OPTIONS.docLayoutComponent),
+  docsRootComponent: Joi.string().default(DEFAULT_OPTIONS.docsRootComponent),
+  docVersionRootComponent: Joi.string().default(
+    DEFAULT_OPTIONS.docVersionRootComponent
+  ),
+  docRootComponent: Joi.string().default(DEFAULT_OPTIONS.docRootComponent),
   docItemComponent: Joi.string().default(DEFAULT_OPTIONS.docItemComponent),
   docTagsListComponent: Joi.string().default(
-    DEFAULT_OPTIONS.docTagsListComponent,
+    DEFAULT_OPTIONS.docTagsListComponent
   ),
   docTagDocListComponent: Joi.string().default(
-    DEFAULT_OPTIONS.docTagDocListComponent,
+    DEFAULT_OPTIONS.docTagDocListComponent
   ),
   docCategoryGeneratedIndexComponent: Joi.string().default(
-    DEFAULT_OPTIONS.docCategoryGeneratedIndexComponent,
+    DEFAULT_OPTIONS.docCategoryGeneratedIndexComponent
   ),
   remarkPlugins: RemarkPluginsSchema.default(DEFAULT_OPTIONS.remarkPlugins),
   rehypePlugins: RehypePluginsSchema.default(DEFAULT_OPTIONS.rehypePlugins),
   beforeDefaultRemarkPlugins: RemarkPluginsSchema.default(
-    DEFAULT_OPTIONS.beforeDefaultRemarkPlugins,
+    DEFAULT_OPTIONS.beforeDefaultRemarkPlugins
   ),
   beforeDefaultRehypePlugins: RehypePluginsSchema.default(
-    DEFAULT_OPTIONS.beforeDefaultRehypePlugins,
+    DEFAULT_OPTIONS.beforeDefaultRehypePlugins
   ),
   admonitions: AdmonitionsSchema.default(DEFAULT_OPTIONS.admonitions),
   showLastUpdateTime: Joi.bool().default(DEFAULT_OPTIONS.showLastUpdateTime),
   showLastUpdateAuthor: Joi.bool().default(
-    DEFAULT_OPTIONS.showLastUpdateAuthor,
+    DEFAULT_OPTIONS.showLastUpdateAuthor
   ),
   includeCurrentVersion: Joi.bool().default(
-    DEFAULT_OPTIONS.includeCurrentVersion,
+    DEFAULT_OPTIONS.includeCurrentVersion
   ),
   onlyIncludeVersions: Joi.array().items(Joi.string().required()).optional(),
   disableVersioning: Joi.bool().default(DEFAULT_OPTIONS.disableVersioning),
@@ -148,14 +152,14 @@ export function validateOptions({
     // When sidebarCollapsible=false and sidebarCollapsed=undefined, we don't
     // want to have the inconsistency warning. We let options.sidebarCollapsible
     // become the default value for options.sidebarCollapsed
-    if (typeof options.sidebarCollapsed === 'undefined') {
+    if (typeof options.sidebarCollapsed === "undefined") {
       options = {
         ...options,
         sidebarCollapsed: false,
       };
     }
     if (options.sidebarCollapsed) {
-      logger.warn`The docs plugin config is inconsistent. It does not make sense to use code=${'sidebarCollapsible: false'} and code=${'sidebarCollapsed: true'} at the same time. code=${'sidebarCollapsed: true'} will be ignored.`;
+      logger.warn`The docs plugin config is inconsistent. It does not make sense to use code=${"sidebarCollapsible: false"} and code=${"sidebarCollapsed: true"} at the same time. code=${"sidebarCollapsed: true"} will be ignored.`;
       options = {
         ...options,
         sidebarCollapsed: false,

@@ -4,8 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-import type { GlobalPluginData, GlobalVersion, ActivePlugin, ActiveDocContext, DocVersionSuggestions } from './index';
-import type { UseDataOptions } from '@docusaurus/types';
+import type { GlobalPluginData, GlobalVersion, ActivePlugin, ActiveDocContext, DocVersionSuggestions } from ".";
+import type { UseDataOptions } from "@docusaurus/types";
 export declare function getActivePlugin(allPluginData: {
     [pluginId: string]: GlobalPluginData;
 }, pathname: string, options?: UseDataOptions): ActivePlugin | undefined;

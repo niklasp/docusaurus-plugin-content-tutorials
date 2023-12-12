@@ -24,7 +24,8 @@ export type GlobalDoc = {
      */
     id: string;
     path: string;
-    sidebar: string | undefined;
+    sidebar?: string;
+    unlisted?: boolean;
 };
 export type GlobalVersion = {
     name: string;
@@ -33,7 +34,7 @@ export type GlobalVersion = {
     path: string;
     /** The doc with `slug: /`, or first doc in first sidebar */
     mainDocId: string;
-    tutorials: GlobalDoc[];
+    docs: GlobalDoc[];
     /** Unversioned IDs. In development, this list is empty. */
     draftIds: string[];
     sidebars?: {
